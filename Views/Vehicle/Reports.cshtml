@@ -1,0 +1,40 @@
+﻿@model List<APCVehicleTracker.Models.Vehicle>
+@{
+    ViewData["Title"] = "Reports";
+    var byLocation = Model.GroupBy(v => v.CurrentLocation);
+}
+
+<h4>Stock Reports</h4>
+
+<div class="row g-3 mt-2">
+    @foreach (var group in byLocation)
+    {
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card shadow-sm text-center">
+                <div class="card-body">
+                    <h2 class="text-primary">@group.Count()</h2>
+                    <p class="mb-0">@group.Key</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<h5 class="mt-5">Full Stock List</h5>
+<div class="table-responsive">
+    <table class="table table-striped bg-white">
+        <thead><tr><th>Reg No.</th><th>Make/Model</th><th>Location</th><th>Status</th><th>Last Moved</th></tr></thead>
+        <tbody>
+            @foreach (var v in Model)
+            {
+                <tr>
+                    <td>@v.RegistrationNumber</td>
+                    <td>@v.Make @v.Model</td>
+                    <td>@v.CurrentLocation</td>
+                    <td>@v.Status</td>
+                    <td>@v.LastMoved.ToString("dd MMM yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

@@ -1,0 +1,37 @@
+﻿@model List<APCVehicleTracker.Models.Vehicle>
+@{
+    ViewData["Title"] = "Search";
+}
+
+<h4>Search Vehicles</h4>
+
+<form asp-action="Search" method="get" class="d-flex mb-4" style="max-width:500px;">
+    <input type="text" name="query" class="form-control me-2" placeholder="Search by reg, make or model..." value="@ViewBag.Query" />
+    <button type="submit" class="btn btn-apc">Search</button>
+</form>
+
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-hover bg-white">
+            <thead><tr><th>Reg No.</th><th>Make</th><th>Model</th><th>Location</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+                @foreach (var v in Model)
+                {
+                    <tr>
+                        <td>@v.RegistrationNumber</td>
+                        <td>@v.Make</td>
+                        <td>@v.Model</td>
+                        <td>@v.CurrentLocation</td>
+                        <td>@v.Status</td>
+                        <td><a asp-action="Details" asp-route-id="@v.Id" class="btn btn-sm btn-outline-primary">View</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <p class="text-muted">No vehicles found.</p>
+}
