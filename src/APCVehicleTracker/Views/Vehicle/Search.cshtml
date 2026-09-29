@@ -1,37 +1,180 @@
-﻿@model List<APCVehicleTracker.Models.Vehicle>
+﻿@model APCVehicleTracker.Models.VehicleSearchViewModel
+
 @{
-    ViewData["Title"] = "Search";
+    ViewData["Title"] = "Vehicle Search";
 }
 
-<h4>Search Vehicles</h4>
+<div class="container mt-4">
 
-<form asp-action="Search" method="get" class="d-flex mb-4" style="max-width:500px;">
-    <input type="text" name="query" class="form-control me-2" placeholder="Search by reg, make or model..." value="@ViewBag.Query" />
-    <button type="submit" class="btn btn-apc">Search</button>
-</form>
+    <h1 class="mb-4">Vehicle Search</h1>
 
-@if (Model.Any())
-{
-    <div class="table-responsive">
-        <table class="table table-hover bg-white">
-            <thead><tr><th>Reg No.</th><th>Make</th><th>Model</th><th>Location</th><th>Status</th><th></th></tr></thead>
-            <tbody>
-                @foreach (var v in Model)
-                {
-                    <tr>
-                        <td>@v.RegistrationNumber</td>
-                        <td>@v.Make</td>
-                        <td>@v.Model</td>
-                        <td>@v.CurrentLocation</td>
-                        <td>@v.Status</td>
-                        <td><a asp-action="Details" asp-route-id="@v.Id" class="btn btn-sm btn-outline-primary">View</a></td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+    <form method="get" asp-controller="Vehicle" asp-action="Search">
+
+        <div class="row g-3">
+
+            <div class="col-md-3">
+                <label class="form-label">Make</label>
+                <select name="make" class="form-select" id="makeSelect">
+                    <option value="">All Makes</option>
+
+                    @foreach (var make in Model.AvailableMakes)
+                    {
+                        <option value="@make" selected="@(Model.Make == make)">
+                            @make
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Model</label>
+                <select name="model" class="form-select" id="modelSelect">
+                    <option value="">All Models</option>
+
+                    @foreach (var modelName in Model.AvailableModels)
+                    {
+                        <option value="@modelName" selected="@(Model.Model == modelName)">
+                            @modelName
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Year From</label>
+                <input type="number"
+                       name="yearFrom"
+                       value="@Model.YearFrom"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Year To</label>
+                <input type="number"
+                       name="yearTo"
+                       value="@Model.YearTo"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+
+                    @foreach (var status in Model.AvailableStatuses)
+                    {
+                        <option value="@status" selected="@(Model.Status.Contains(status))">
+                            @status
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Location</label>
+                <select name="location" class="form-select">
+                    <option value="">All Locations</option>
+
+                    @foreach (var location in Model.AvailableLocations)
+                    {
+                        <option value="@location.LocationId"
+                                selected="@(Model.Location.Contains(location.LocationId))">
+                            @location.LocationName
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end">
+                <div class="form-check">
+                    <input type="checkbox"
+                           name="includeSold"
+                           value="true"
+                           class="form-check-input"
+                           id="includeSold"
+                    @(Model.IncludeSold ? "checked" : "") />
+
+                    <label class="form-check-label" for="includeSold">
+                        Include sold vehicles
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary">
+                    Search
+                </button>
+
+                <a asp-controller="Vehicle"
+                   asp-action="Search"
+                   class="btn btn-secondary">
+                    Clear Filters
+                </a>
+            </div>
+
+        </div>
+    </form>
+
+    <hr class="my-4" />
+
+    <div class="mb-3">
+        <strong>@Model.TotalCount</strong> vehicle(s) found
     </div>
-}
-else
-{
-    <p class="text-muted">No vehicles found.</p>
-}
+
+    @if (!Model.Vehicles.Any())
+    {
+        <div class="alert alert-info">
+            No matching vehicles found.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+
+            @foreach (var vehicle in Model.Vehicles)
+            {
+                <div class="col-md-4">
+
+                    <div class="card h-100">
+
+                        @if (!string.IsNullOrWhiteSpace(vehicle.PrimaryImage))
+                        {
+                            <img src="@vehicle.PrimaryImage"
+                                 class="card-img-top"
+                                 alt="@vehicle.Make @vehicle.Model"
+                                 style="height:220px; object-fit:cover;" />
+                        }
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">
+                                @vehicle.Make @vehicle.Model
+                            </h5>
+
+                            <p class="card-text">
+                                <strong>Year:</strong> @vehicle.Year<br />
+                                <strong>Registration:</strong> @vehicle.Registration<br />
+                                <strong>Status:</strong> @vehicle.Status<br />
+                                <strong>Location:</strong>
+                                @(vehicle.CurrentLocation ?? "Unknown")<br />
+                                <strong>Days at location:</strong>
+                                @(vehicle.DaysAtCurrentLocation?.ToString() ?? "N/A")
+                            </p>
+
+                            <a asp-controller="Vehicle"
+                               asp-action="Details"
+                               asp-route-id="@vehicle.VehicleId"
+                               class="btn btn-primary">
+                                View Details
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+</div>
