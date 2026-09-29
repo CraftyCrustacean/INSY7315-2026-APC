@@ -12,4 +12,8 @@
     <PackageReference Include="Microsoft.Identity.Web.UI" Version="4.15.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\APCVehicleTracker.Data\APCVehicleTracker.Data.csproj" />
+  </ItemGroup>
+
 </Project>

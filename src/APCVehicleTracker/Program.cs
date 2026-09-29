@@ -1,18 +1,16 @@
+using APCVehicleTracker.Auth;
+using APCVehicleTracker.Data;
 using APCVehicleTracker.Services;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services
-    .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
-    .AddMicrosoftIdentityWebApp(builder.Configuration.GetSection("AzureAd"))
-    .EnableTokenAcquisitionToCallDownstreamApi()
-    .AddInMemoryTokenCaches();
+builder.Services.AddAppDatabase(builder.Configuration);
+builder.Services.AddAppAuthentication(builder.Configuration);
+builder.Services.AddAppAuthorization();
 
 builder.Services.AddControllersWithViews(options =>
 {

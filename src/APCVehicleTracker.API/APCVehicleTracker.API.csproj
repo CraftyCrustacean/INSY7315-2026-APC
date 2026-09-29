@@ -20,4 +20,8 @@
     <Folder Include="Services\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\APCVehicleTracker.Data\APCVehicleTracker.Data.csproj" />
+  </ItemGroup>
+
 </Project>

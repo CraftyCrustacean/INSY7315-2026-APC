@@ -1,4 +1,4 @@
-﻿namespace APCVehicleTracker.API.Models
+﻿namespace APCVehicleTracker.Data.Models
 {
     public class Vehicle
     {
