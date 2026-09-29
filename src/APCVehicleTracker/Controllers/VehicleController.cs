@@ -1,58 +1,55 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using APCVehicleTracker.Models;
 using APCVehicleTracker.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace APCVehicleTracker.Controllers
 {
     public class VehicleController : Controller
     {
-        public IActionResult Index()
+        private readonly VehicleApiService _vehicleApiService;
+
+        public VehicleController(VehicleApiService vehicleApiService)
         {
-            if (HttpContext.Session.GetString("User") == null)
+            _vehicleApiService = vehicleApiService;
+        }
+
+        public async Task<IActionResult> Search(
+            string? make = null,string? model = null, int? yearFrom = null, int? yearTo = null,
+            List<string>? status = null,List<int>? location = null,bool includeSold = false,
+            int page = 1)
+        {
+            var result = await _vehicleApiService.SearchVehiclesAsync(
+                make,model,yearFrom,yearTo,status,location,includeSold,page);
+
+            if (result == null)
             {
-                return RedirectToAction("Login", "Account");
+                result = new VehicleSearchViewModel();
             }
 
-            var vehicles = DummyDataService.GetVehicles();
-            return View(vehicles);
-        }
+            result.Make = make;
+            result.Model = model;
+            result.YearFrom = yearFrom;
+            result.YearTo = yearTo;
+            result.Status = status ?? new List<string>();
+            result.Location = location ?? new List<int>();
+            result.IncludeSold = includeSold;
+            result.Page = page;
 
-   
+            result.AvailableMakes = await _vehicleApiService.GetMakesAsync();
+            result.AvailableModels = await _vehicleApiService.GetModelsAsync(make);
+            result.AvailableLocations = await _vehicleApiService.GetLocationsAsync();
 
-        public IActionResult Details(int id)
-        {
-            var vehicle = DummyDataService.GetVehicles().FirstOrDefault(v => v.Id == id);
-            if (vehicle == null) return NotFound();
-
-            ViewBag.MovementHistory = DummyDataService.GetMovementHistory(id);
-            return View(vehicle);
-        }
-
-        public IActionResult LogMovement(int id)
-        {
-            var vehicle = DummyDataService.GetVehicles().FirstOrDefault(v => v.Id == id);
-            if (vehicle == null) return NotFound();
-            return View(vehicle);
-        }
-
-        public IActionResult Search(string query)
-        {
-            var vehicles = DummyDataService.GetVehicles();
-            if (!string.IsNullOrEmpty(query))
+            result.AvailableStatuses = new List<string>
             {
-                vehicles = vehicles.Where(v =>
-                    v.RegistrationNumber.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                    v.Make.Contains(query, StringComparison.OrdinalIgnoreCase) ||
-                    v.Model.Contains(query, StringComparison.OrdinalIgnoreCase)
-                ).ToList();
-            }
-            ViewBag.Query = query;
-            return View(vehicles);
-        }
+                "Available", "Reserved", "In Transit", "In Workshop"
+            };
 
-        public IActionResult Reports()
-        {
-            var vehicles = DummyDataService.GetVehicles();
-            return View(vehicles);
+            if (includeSold)
+            {
+                result.AvailableStatuses.Add("Sold");
+            }
+
+            return View(result);
         }
     }
 }
