@@ -1,7 +1,7 @@
-﻿using APCVehicleTracker.API.Models;
+﻿using APCVehicleTracker.Data.Models;
 using Microsoft.EntityFrameworkCore;
 
-namespace APCVehicleTracker.API.Data
+namespace APCVehicleTracker.Data
 {
     public class ApplicationDbContext : DbContext
     {
@@ -105,6 +105,8 @@ namespace APCVehicleTracker.API.Data
                 entity.Property(s => s.Email).HasColumnName("email");
                 entity.Property(s => s.Phone).HasColumnName("phone");
                 entity.Property(s => s.Role).HasColumnName("role");
+                entity.Property(s => s.EntraObjectId).HasColumnName("entra_object_id");
+                entity.Property(s => s.IsActive).HasColumnName("is_active");
             });
             modelBuilder.Entity<VehicleImage>(entity =>
             {

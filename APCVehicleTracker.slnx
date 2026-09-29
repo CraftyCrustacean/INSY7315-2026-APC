@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/APCVehicleTracker.Data/APCVehicleTracker.Data.csproj" />
     <Project Path="src/APCVehicleTracker/APCVehicleTracker.csproj" />
   </Folder>
   <Folder Name="/tests/">

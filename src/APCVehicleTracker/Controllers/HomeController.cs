@@ -1,4 +1,5 @@
 using APCVehicleTracker.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 
@@ -11,6 +12,12 @@ namespace APCVehicleTracker.Controllers
         public HomeController(ILogger<HomeController> logger)
         {
             _logger = logger;
+        }
+
+        [AllowAnonymous]
+        public IActionResult NotAuthorised()
+        {
+            return View();
         }
 
         public IActionResult Index()

@@ -1,14 +1,9 @@
-using APCVehicleTracker.API.Data;
+using APCVehicleTracker.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-
-Console.WriteLine($"Connection string loaded: {!string.IsNullOrEmpty(connectionString)}");
-
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+builder.Services.AddAppDatabase(builder.Configuration);
 
 // Add services to the container.
 
