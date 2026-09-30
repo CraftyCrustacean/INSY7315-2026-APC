@@ -1,4 +1,7 @@
-﻿<!DOCTYPE html>
+﻿@using Microsoft.AspNetCore.Authorization
+@inject Microsoft.AspNetCore.Authorization.IAuthorizationService AuthorizationService
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -23,13 +26,23 @@
                         <li class="nav-item"><a class="nav-link" asp-controller="Vehicle" asp-action="Index">Dashboard</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Vehicle" asp-action="Search">Search</a></li>
                         <li class="nav-item"><a class="nav-link" asp-controller="Vehicle" asp-action="Reports">Reports</a></li>
+                        @if ((await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanManageUsers)).Succeeded)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="Admin" asp-action="Index">Staff</a></li>
+                        }
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="MicrosoftIdentity" asp-controller="Account" asp-action="SignOut">Sign out</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
 
-    <main class="container-fluid py-4">
+    <main class="container-fluid px-5 px-lg-6 py-4">
         @RenderBody()
     </main>
 
