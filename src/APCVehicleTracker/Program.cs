@@ -1,11 +1,12 @@
 using APCVehicleTracker.Auth;
 using APCVehicleTracker.Data;
+using APCVehicleTracker.Data.Auth;
 using APCVehicleTracker.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
-using APCVehicleTracker.Data.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,7 +21,11 @@ builder.Services.AddControllersWithViews(options =>
     var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
     options.Filters.Add(new AuthorizeFilter(policy));
     options.Filters.Add(new AuthorizeForScopesAttribute { ScopeKeySection = "VehicleApi:Scopes" });
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    options.Filters.Add<AuthFailureFilter>();
 }).AddMicrosoftIdentityUI();
+
+builder.Services.AddAntiforgery(auth => auth.HeaderName = "RequestVerificationToken");
 
 builder.Services.AddSession();
 
@@ -39,6 +44,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Some light protections against malicious users
+app.Use(async (context, next) =>
+{
+    var head = context.Response.Headers;
+    head["X-Content-Type-Options"] = "nosniff";
+    head["X-Frame-Options"] = "DENY";
+    head["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    await next();
+});
+
 app.UseStaticFiles();
 
 app.UseRouting();
