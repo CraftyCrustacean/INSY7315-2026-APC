@@ -1,7 +1,7 @@
-﻿using System.Runtime.CompilerServices;
-using APCVehicleTracker.Models;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Authorization;
 
-namespace APCVehicleTracker.Auth;
+namespace APCVehicleTracker.Data.Auth;
 
 public static class AuthPolicies
 {

@@ -1,6 +1,7 @@
 ﻿using APCVehicleTracker.Services;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
+using APCVehicleTracker.Data.Auth;
 
 namespace APCVehicleTracker.Auth;
 
@@ -14,7 +15,7 @@ public static class AuthSetup
         services
             .AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
             .AddMicrosoftIdentityWebApp(config.GetSection("AzureAd"))
-            .EnableTokenAcquisitionToCallDownstreamApi()
+            .EnableTokenAcquisitionToCallDownstreamApi(config.GetSection("VehicleApi:Scopes").Get<string[]>())
             .AddInMemoryTokenCaches();
 
         services.Configure<OpenIdConnectOptions>(OpenIdConnectDefaults.AuthenticationScheme, options =>

@@ -1,7 +1,6 @@
-﻿using APCVehicleTracker.Data;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
-namespace APCVehicleTracker.Services;
+namespace APCVehicleTracker.Data.Auth;
 
 public class DbStaffLookup : IStaffLookup
 {
