@@ -1,4 +1,4 @@
-﻿using APCVehicleTracker.Auth;
+﻿using APCVehicleTracker.Data.Auth;
 using APCVehicleTracker.Models;
 using APCVehicleTracker.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -78,7 +78,8 @@ namespace APCVehicleTracker.Controllers
         [HttpGet]
         public async Task<IActionResult> LogMovement(int id)
         {
-            var vehicle = await _vehicleApiService.GetVehicleDetailsAsync(id);
+            var vehicle =
+                await _vehicleApiService.GetVehicleDetailsAsync(id);
 
             if (vehicle == null)
             {
@@ -91,7 +92,8 @@ namespace APCVehicleTracker.Controllers
                     "Sold vehicles cannot have movements logged.");
             }
 
-            var locations = await _vehicleApiService.GetLocationsAsync();
+            var locations =
+                await _vehicleApiService.GetLocationsAsync();
 
             var destinationLocations = locations
                 .Where(location =>
@@ -101,7 +103,8 @@ namespace APCVehicleTracker.Controllers
                         StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            ViewBag.DestinationLocations = destinationLocations;
+            ViewBag.DestinationLocations =
+                destinationLocations;
 
             ViewBag.AvailableStatuses = new List<string>
             {
@@ -153,11 +156,12 @@ namespace APCVehicleTracker.Controllers
                 return View(invalidVehicle);
             }
 
-            var response = await _vehicleApiService.LogMovementAsync(
-                id,
-                toLocationId,
-                newStatus,
-                notes);
+            var response =
+                await _vehicleApiService.LogMovementAsync(
+                    id,
+                    toLocationId,
+                    newStatus,
+                    notes);
 
             if (response.IsSuccessStatusCode)
             {
@@ -193,7 +197,8 @@ namespace APCVehicleTracker.Controllers
             return View(vehicle);
         }
 
-        private async Task PrepareMovementFormAsync(Vehicle vehicle)
+        private async Task PrepareMovementFormAsync(
+            Vehicle vehicle)
         {
             var locations =
                 await _vehicleApiService.GetLocationsAsync();
@@ -216,4 +221,3 @@ namespace APCVehicleTracker.Controllers
         }
     }
 }
-
