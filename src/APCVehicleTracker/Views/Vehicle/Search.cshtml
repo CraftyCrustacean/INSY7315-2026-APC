@@ -168,6 +168,20 @@
                                 View Details
                             </a>
 
+                            @* Saheel Ramone Bhugwandeen - Feature 3: Log Movement *@
+                            @if (User.IsInRole("Admin") ||
+                                 User.IsInRole("StockController") ||
+                                 User.IsInRole("BranchManager") ||
+                                 User.IsInRole("TransportStaff"))
+                            {
+                                <a asp-controller="Vehicle"
+                                   asp-action="LogMovement"
+                                   asp-route-id="@vehicle.VehicleId"
+                                   class="btn btn-apc">
+                                    Log Movement
+                                </a>
+                            }
+
                         </div>
 
                     </div>
@@ -178,3 +192,4 @@
         </div>
     }
 </div>
+

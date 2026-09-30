@@ -1,4 +1,5 @@
-﻿using APCVehicleTracker.Models;
+﻿
+using APCVehicleTracker.Models;
 using System.Net.Http.Json;
 
 namespace APCVehicleTracker.Services
@@ -82,8 +83,8 @@ namespace APCVehicleTracker.Services
                 url += $"?make={Uri.EscapeDataString(make)}";
             }
 
-            return await _httpClient.GetFromJsonAsync<List<string>>(url)
-                   ?? new List<string>();
+            return await _httpClient.GetFromJsonAsync<List<string>>(
+                url) ?? new List<string>();
         }
 
         public async Task<List<LocationViewModel>> GetLocationsAsync()
@@ -93,5 +94,79 @@ namespace APCVehicleTracker.Services
 
             return locations ?? new List<LocationViewModel>();
         }
+
+        public async Task<Vehicle?> GetVehicleDetailsAsync(int vehicleId)
+        {
+            var response = await _httpClient.GetAsync(
+                $"api/vehicles/{vehicleId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var result = await response.Content
+                .ReadFromJsonAsync<VehicleDetailsApiResponse>();
+
+            if (result == null)
+            {
+                return null;
+            }
+
+            return new Vehicle
+            {
+                Id = result.VehicleId,
+                RegistrationNumber = result.Registration,
+                Make = result.Make,
+                Model = result.Model,
+                Year = result.Year,
+                VinNumber = result.Vin ?? string.Empty,
+                CurrentLocation = result.CurrentLocation ?? string.Empty,
+                Status = result.Status,
+                LastMoved = DateTime.UtcNow
+            };
+        }
+
+        public async Task<HttpResponseMessage> LogMovementAsync(
+            int vehicleId,
+            int toLocationId,
+            string? newStatus,
+            string? notes)
+        {
+            var request = new
+            {
+                ToLocationId = toLocationId,
+                NewStatus = newStatus,
+                Notes = notes
+            };
+
+            return await _httpClient.PostAsJsonAsync(
+                $"api/vehicles/{vehicleId}/movements",
+                request);
+        }
+
+        private sealed class VehicleDetailsApiResponse
+        {
+            public int VehicleId { get; set; }
+
+            public string? PrimaryImage { get; set; }
+
+            public string Make { get; set; } = string.Empty;
+
+            public string Model { get; set; } = string.Empty;
+
+            public int Year { get; set; }
+
+            public string Registration { get; set; } = string.Empty;
+
+            public string? Vin { get; set; }
+
+            public string Status { get; set; } = string.Empty;
+
+            public string? CurrentLocation { get; set; }
+
+            public int? DaysAtCurrentLocation { get; set; }
+        }
     }
 }
+
