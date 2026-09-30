@@ -1,7 +1,7 @@
-﻿using APCVehicleTracker.Services;
+﻿using APCVehicleTracker.Data.Auth;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Identity.Web;
-using APCVehicleTracker.Data.Auth;
 
 namespace APCVehicleTracker.Auth;
 
@@ -31,7 +31,22 @@ public static class AuthSetup
                     vld.HandleResponse();
                     vld.Response.Redirect("/Home/NotAuthorised");
                 }
+
+                var existingRedirect = options.Events.OnRedirectToIdentityProvider;
+                options.Events.OnRedirectToIdentityProvider = async vld =>
+                {
+                    await existingRedirect(vld);
+                    vld.ProtocolMessage.Prompt = "login";
+                };
             };
+        });
+
+        services.Configure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, cookie =>
+        {
+            cookie.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+            cookie.SlidingExpiration = true;
+            cookie.Cookie.HttpOnly = true;
+            cookie.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         });
 
         return services;
