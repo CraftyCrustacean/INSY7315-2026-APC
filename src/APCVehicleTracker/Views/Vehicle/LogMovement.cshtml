@@ -1,39 +1,134 @@
-﻿@model APCVehicleTracker.Models.Vehicle
+﻿```cshtml
+@model APCVehicleTracker.Models.Vehicle
+
 @{
     ViewData["Title"] = "Log Movement";
+
+    var destinationLocations =
+        ViewBag.DestinationLocations
+        as List<APCVehicleTracker.Models.LocationViewModel>
+        ?? new List<APCVehicleTracker.Models.LocationViewModel>();
+
+    var availableStatuses =
+        ViewBag.AvailableStatuses
+        as List<string>
+        ?? new List<string>();
 }
 
 <h4>Log Movement — @Model.Make @Model.Model (@Model.RegistrationNumber)</h4>
 
 <div class="card shadow-sm mt-3" style="max-width:600px;">
     <div class="card-body">
-        <form>
+
+        <form asp-controller="Vehicle"
+              asp-action="LogMovement"
+              asp-route-id="@Model.Id"
+              method="post">
+
+            @Html.AntiForgeryToken()
+
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3">
+            </div>
+
             <div class="mb-3">
                 <label class="form-label">From Location</label>
-                <input type="text" class="form-control" value="@Model.CurrentLocation" readonly />
+
+                <input type="text"
+                       class="form-control"
+                       value="@Model.CurrentLocation"
+                       readonly />
+
+                <div class="form-text">
+                    This is automatically taken from the vehicle's current location.
+                </div>
             </div>
+
             <div class="mb-3">
-                <label class="form-label">To Location</label>
-                <select class="form-select">
-                    <option>Showroom</option>
-                    <option>Workshop</option>
-                    <option>Detailing</option>
-                    <option>Wash Bay</option>
-                    <option>Storage Yard</option>
-                    <option>Panel Shop</option>
-                    <option>Tyres</option>
+                <label for="toLocationId" class="form-label">
+                    To Location
+                </label>
+
+                <select id="toLocationId"
+                        name="toLocationId"
+                        class="form-select"
+                        required>
+
+                    <option value="">
+                        Select destination
+                    </option>
+
+                    @foreach (var location in destinationLocations)
+                    {
+                        <option value="@location.LocationId">
+                            @location.LocationName
+                        </option>
+                    }
+                </select>
+
+                <span class="text-danger"
+                      data-valmsg-for="toLocationId">
+                </span>
+            </div>
+
+            <div class="mb-3">
+                <label for="newStatus" class="form-label">
+                    New Status
+                </label>
+
+                <select id="newStatus"
+                        name="newStatus"
+                        class="form-select">
+
+                    <option value="">
+                        Keep current status (@Model.Status)
+                    </option>
+
+                    @foreach (var status in availableStatuses)
+                    {
+                        <option value="@status">
+                            @status
+                        </option>
+                    }
                 </select>
             </div>
+
             <div class="mb-3">
-                <label class="form-label">Moved By</label>
-                <input type="text" class="form-control" placeholder="Staff member name" />
+                <label for="notes" class="form-label">
+                    Notes
+                </label>
+
+                <textarea id="notes"
+                          name="notes"
+                          class="form-control"
+                          rows="3"
+                          maxlength="500"
+                          placeholder="Optional notes"></textarea>
+
+                <div class="form-text">
+                    Maximum 500 characters.
+                </div>
+
+                <span class="text-danger"
+                      data-valmsg-for="notes">
+                </span>
             </div>
-            <div class="mb-3">
-                <label class="form-label">Notes</label>
-                <textarea class="form-control" rows="3"></textarea>
-            </div>
-            <button type="submit" class="btn btn-apc">Save Movement</button>
-            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Cancel</a>
+
+            <button type="submit"
+                    class="btn btn-apc">
+                Save Movement
+            </button>
+
+            <a asp-action="Details"
+               asp-route-id="@Model.Id"
+               class="btn btn-outline-secondary">
+                Cancel
+            </a>
         </form>
     </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+```

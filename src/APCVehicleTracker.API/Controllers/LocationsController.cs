@@ -1,4 +1,5 @@
-﻿using APCVehicleTracker.Data;
+﻿
+using APCVehicleTracker.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -19,9 +20,11 @@ namespace APCVehicleTracker.API.Controllers
         public async Task<IActionResult> GetLocations()
         {
             var locations = await _context.Locations
+                .AsNoTracking()
                 .ToListAsync();
 
             return Ok(locations);
         }
     }
 }
+
