@@ -1,8 +1,7 @@
-﻿using APCVehicleTracker.Services;
-using Microsoft.Identity.Web;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 
-namespace APCVehicleTracker.Auth;
+
+namespace APCVehicleTracker.Data.Auth;
 
 public class StaffSigninService
 {
@@ -14,7 +13,7 @@ public class StaffSigninService
 
     public async Task<bool> StaffClaimAsync(ClaimsPrincipal principal, CancellationToken cancellationToken = default)
     {
-        var objectId = principal.GetObjectId();
+        var objectId = principal.FindFirst("oid")?.Value ?? principal.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
         if (objectId == null || principal.Identity is not ClaimsIdentity identity) return false;
 
         var staff = await _lookup.FindByObjectIdAsync(objectId, cancellationToken);
@@ -26,4 +25,3 @@ public class StaffSigninService
     }
 
 }
-

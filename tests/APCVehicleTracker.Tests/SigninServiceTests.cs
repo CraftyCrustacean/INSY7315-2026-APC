@@ -1,7 +1,5 @@
 ﻿using System.Security.Claims;
-using APCVehicleTracker.Auth;
-using APCVehicleTracker.Models;
-using APCVehicleTracker.Services;
+using APCVehicleTracker.Data.Auth;
 
 public class StaffSignInServiceTests
 {

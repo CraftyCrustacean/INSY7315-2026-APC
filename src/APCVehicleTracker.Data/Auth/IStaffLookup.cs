@@ -1,4 +1,4 @@
-﻿namespace APCVehicleTracker.Services;
+﻿namespace APCVehicleTracker.Data.Auth;
 
 public record StaffInfo(int StaffId, string EntraObjectId, string Email, string FirstName, string LastName, string Role, bool IsActive);
 public interface IStaffLookup
