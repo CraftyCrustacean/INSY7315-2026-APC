@@ -1,4 +1,4 @@
-﻿```cshtml
+﻿
 @model APCVehicleTracker.Models.Vehicle
 
 @{
@@ -119,8 +119,8 @@
                 Save Movement
             </button>
 
-            <a asp-action="Details"
-               asp-route-id="@Model.Id"
+            <a asp-controller="Vehicle"
+               asp-action="Search"
                class="btn btn-outline-secondary">
                 Cancel
             </a>
@@ -131,4 +131,3 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }
-```
