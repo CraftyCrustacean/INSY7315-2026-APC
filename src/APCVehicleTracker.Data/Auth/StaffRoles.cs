@@ -1,4 +1,4 @@
-﻿namespace APCVehicleTracker.Models;
+﻿namespace APCVehicleTracker.Data.Auth;
 
 public class StaffRoles
 {

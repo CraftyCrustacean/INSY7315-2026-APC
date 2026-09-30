@@ -3,7 +3,9 @@ using APCVehicleTracker.Data;
 using APCVehicleTracker.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
+using APCVehicleTracker.Data.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,19 +13,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAppDatabase(builder.Configuration);
 builder.Services.AddAppAuthentication(builder.Configuration);
 builder.Services.AddAppAuthorization();
+builder.Services.AddTransient<ApiTokenHandler>();
 
 builder.Services.AddControllersWithViews(options =>
 {
     var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
     options.Filters.Add(new AuthorizeFilter(policy));
+    options.Filters.Add(new AuthorizeForScopesAttribute { ScopeKeySection = "VehicleApi:Scopes" });
 }).AddMicrosoftIdentityUI();
 
 builder.Services.AddSession();
 
 builder.Services.AddHttpClient<VehicleApiService>(client =>
 {
-    client.BaseAddress = new Uri("https://localhost:7183/");
-});
+    client.BaseAddress = new Uri(builder.Configuration["VehicleApi:BaseUrl"]!);
+}).AddHttpMessageHandler<ApiTokenHandler>();
 
 var app = builder.Build();
 
@@ -45,6 +49,6 @@ app.UseSession();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Account}/{action=Login}/{id?}");
+    pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
