@@ -1,12 +1,38 @@
-﻿@model APCVehicleTracker.Models.VehicleSearchViewModel
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model APCVehicleTracker.Models.VehicleSearchViewModel
 
 @{
     ViewData["Title"] = "Vehicle Search";
+
+    // The API always returns 25 results per page.
+    const int pageSize = 25;
+    var totalPages = (int)Math.Ceiling(Model.TotalCount / (double)pageSize);
+
+    // Keeps the current filters on the Previous/Next links.
+    var routeData = new Dictionary<string, string>();
+    if (!string.IsNullOrWhiteSpace(Model.Make)) routeData["make"] = Model.Make;
+    if (!string.IsNullOrWhiteSpace(Model.Model)) routeData["model"] = Model.Model;
+    if (Model.YearFrom.HasValue) routeData["yearFrom"] = Model.YearFrom.Value.ToString();
+    if (Model.YearTo.HasValue) routeData["yearTo"] = Model.YearTo.Value.ToString();
+    var selectedStatus = Model.Status.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
+    if (selectedStatus != null) routeData["status"] = selectedStatus;
+    var selectedLocation = Model.Location.FirstOrDefault(l => l > 0);
+    if (selectedLocation > 0) routeData["location"] = selectedLocation.ToString();
+    if (Model.IncludeSold) routeData["includeSold"] = "true";
+
+    var canLogMovements =
+        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanLogMovements)).Succeeded;
 }
 
 <div class="container mt-4">
 
     <h1 class="mb-4">Vehicle Search</h1>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success">@successMessage</div>
+    }
 
     <form method="get" asp-controller="Vehicle" asp-action="Search">
 
@@ -169,10 +195,7 @@
                             </a>
 
                             @* Saheel Ramone Bhugwandeen - Feature 3: Log Movement *@
-                            @if (User.IsInRole("Admin") ||
-                                 User.IsInRole("StockController") ||
-                                 User.IsInRole("BranchManager") ||
-                                 User.IsInRole("TransportStaff"))
+                            @if (canLogMovements && vehicle.Status != "Sold")
                             {
                                 <a asp-controller="Vehicle"
                                    asp-action="LogMovement"
@@ -190,6 +213,40 @@
             }
 
         </div>
+
+        @if (totalPages > 1)
+        {
+            <nav class="mt-4" aria-label="Search results pages">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-controller="Vehicle"
+                           asp-action="Search"
+                           asp-all-route-data="routeData"
+                           asp-route-page="@(Model.Page - 1)">Previous</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <span class="page-link">Page @Model.Page of @totalPages</span>
+                    </li>
+                    <li class="page-item @(Model.Page >= totalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           asp-controller="Vehicle"
+                           asp-action="Search"
+                           asp-all-route-data="routeData"
+                           asp-route-page="@(Model.Page + 1)">Next</a>
+                    </li>
+                </ul>
+            </nav>
+        }
     }
 </div>
 
+@section Scripts {
+    <script>
+        // Reload when the make changes so the Model dropdown shows that make's models.
+        document.getElementById('makeSelect').addEventListener('change', function() {
+            document.getElementById('modelSelect').value = '';
+            this.form.submit();
+        });
+    </script>
+}

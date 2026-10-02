@@ -8,6 +8,15 @@ body {
     background-color: var(--apc-light);
 }
 
+    /* Background photo, Home page only (class set in _Layout.cshtml) */
+    body.home-bg {
+        background-image: url('../images/login-background.png');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
+    }
+
 .apc-navbar {
     background-color: var(--apc-navy) !important;
 }
@@ -52,25 +61,22 @@ body {
         background-color: #b8181e;
         color: white;
     }
+
 html {
-  font-size: 14px;
+    font-size: 14px;
 }
 
 @media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
+    html {
+        font-size: 16px;
+    }
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
 html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-  margin-bottom: 60px;
+    position: relative;
+    min-height: 100%;
 }

@@ -13,7 +13,7 @@
             <div class="card shadow-sm text-center">
                 <div class="card-body">
                     <h2 class="text-primary">@group.Count()</h2>
-                    <p class="mb-0">@group.Key</p>
+                    <p class="mb-0">@(string.IsNullOrWhiteSpace(group.Key) ? "No location" : group.Key)</p>
                 </div>
             </div>
         </div>
@@ -32,7 +32,7 @@
                     <td>@v.Make @v.Model</td>
                     <td>@v.CurrentLocation</td>
                     <td>@v.Status</td>
-                    <td>@v.LastMoved.ToString("dd MMM yyyy")</td>
+                    <td>@(v.LastMoved == DateTime.MinValue ? "Not yet moved" : v.LastMoved.ToString("dd MMM yyyy"))</td>
                 </tr>
             }
         </tbody>

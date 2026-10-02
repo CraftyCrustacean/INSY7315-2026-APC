@@ -145,6 +145,86 @@ namespace APCVehicleTracker.Services
                 request);
         }
 
+        // ---------- NEW: used by the Dashboard (Index) and Reports pages ----------
+
+        // The API returns 25 vehicles per page, so keep requesting pages until
+        // every vehicle has been loaded.
+        public async Task<List<Vehicle>> GetAllVehiclesAsync(bool includeSold = false)
+        {
+            var vehicles = new List<Vehicle>();
+            var page = 1;
+
+            while (true)
+            {
+                var url = $"api/vehicles?page={page}";
+
+                if (includeSold)
+                    url += "&includeSold=true";
+
+                var response = await _httpClient
+                    .GetFromJsonAsync<VehicleListApiResponse>(url);
+
+                if (response == null || response.Vehicles.Count == 0)
+                    break;
+
+                vehicles.AddRange(response.Vehicles.Select(MapToVehicle));
+
+                if (vehicles.Count >= response.TotalCount)
+                    break;
+
+                page++;
+            }
+
+            return vehicles;
+        }
+
+        // ---------- NEW: used by the Details page ----------
+
+        public async Task<List<MovementRecord>> GetMovementHistoryAsync(int vehicleId)
+        {
+            var response = await _httpClient.GetAsync(
+                $"api/vehicles/{vehicleId}/movements");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new List<MovementRecord>();
+            }
+
+            var movements = await response.Content
+                .ReadFromJsonAsync<List<MovementHistoryApiResponse>>()
+                ?? new List<MovementHistoryApiResponse>();
+
+            return movements.Select(m => new MovementRecord
+            {
+                Id = m.MovementId,
+                VehicleId = vehicleId,
+                FromLocation = m.FromLocation ?? string.Empty,
+                ToLocation = m.ToLocation,
+                MovedBy = m.MovedBy ?? string.Empty,
+                MovementDate = m.MovementDateTime,
+                Notes = m.Notes ?? string.Empty
+            }).ToList();
+        }
+
+        private static Vehicle MapToVehicle(VehicleListItemApiResponse item)
+        {
+            return new Vehicle
+            {
+                Id = item.VehicleId,
+                RegistrationNumber = item.Registration,
+                Make = item.Make,
+                Model = item.Model,
+                Year = item.Year,
+                CurrentLocation = item.CurrentLocation ?? string.Empty,
+                Status = item.Status,
+                // The API only gives "days at current location", so work back
+                // to a date. A vehicle with no movements keeps DateTime.MinValue.
+                LastMoved = item.DaysAtCurrentLocation.HasValue
+                    ? DateTime.UtcNow.Date.AddDays(-item.DaysAtCurrentLocation.Value)
+                    : DateTime.MinValue
+            };
+        }
+
         private sealed class VehicleDetailsApiResponse
         {
             public int VehicleId { get; set; }
@@ -167,6 +247,46 @@ namespace APCVehicleTracker.Services
 
             public int? DaysAtCurrentLocation { get; set; }
         }
+
+        private sealed class VehicleListApiResponse
+        {
+            public int TotalCount { get; set; }
+
+            public List<VehicleListItemApiResponse> Vehicles { get; set; } = new();
+        }
+
+        private sealed class VehicleListItemApiResponse
+        {
+            public int VehicleId { get; set; }
+
+            public string Make { get; set; } = string.Empty;
+
+            public string Model { get; set; } = string.Empty;
+
+            public int Year { get; set; }
+
+            public string Registration { get; set; } = string.Empty;
+
+            public string Status { get; set; } = string.Empty;
+
+            public string? CurrentLocation { get; set; }
+
+            public int? DaysAtCurrentLocation { get; set; }
+        }
+
+        private sealed class MovementHistoryApiResponse
+        {
+            public int MovementId { get; set; }
+
+            public DateTime MovementDateTime { get; set; }
+
+            public string? FromLocation { get; set; }
+
+            public string ToLocation { get; set; } = string.Empty;
+
+            public string? MovedBy { get; set; }
+
+            public string? Notes { get; set; }
+        }
     }
 }
-

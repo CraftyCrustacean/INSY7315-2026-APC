@@ -1,7 +1,11 @@
-﻿@model APCVehicleTracker.Models.Vehicle
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model APCVehicleTracker.Models.Vehicle
 @{
     ViewData["Title"] = "Vehicle Details";
     var history = ViewBag.MovementHistory as List<APCVehicleTracker.Models.MovementRecord>;
+    var canLogMovements =
+        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanLogMovements)).Succeeded;
 }
 
 <div class="row">
@@ -13,7 +17,12 @@
                 <p><strong>VIN:</strong> @Model.VinNumber</p>
                 <p><strong>Current Location:</strong> @Model.CurrentLocation</p>
                 <p><strong>Status:</strong> @Model.Status</p>
-                <a asp-action="LogMovement" asp-route-id="@Model.Id" class="btn btn-apc">Log New Movement</a>
+
+                @if (canLogMovements && Model.Status != "Sold")
+                {
+                    <a asp-action="LogMovement" asp-route-id="@Model.Id" class="btn btn-apc">Log New Movement</a>
+                }
+                <a asp-action="Search" class="btn btn-outline-secondary">Back to Search</a>
             </div>
         </div>
     </div>
