@@ -15,6 +15,38 @@ namespace APCVehicleTracker.Controllers
             _vehicleApiService = vehicleApiService;
         }
 
+        // NEW: Dashboard
+        public async Task<IActionResult> Index()
+        {
+            var vehicles = await _vehicleApiService.GetAllVehiclesAsync();
+
+            return View(vehicles);
+        }
+
+        // NEW: Vehicle details + movement history
+        public async Task<IActionResult> Details(int id)
+        {
+            var vehicle = await _vehicleApiService.GetVehicleDetailsAsync(id);
+
+            if (vehicle == null)
+            {
+                return NotFound();
+            }
+
+            ViewBag.MovementHistory =
+                await _vehicleApiService.GetMovementHistoryAsync(id);
+
+            return View(vehicle);
+        }
+
+        // NEW: Stock reports
+        public async Task<IActionResult> Reports()
+        {
+            var vehicles = await _vehicleApiService.GetAllVehiclesAsync();
+
+            return View(vehicles);
+        }
+
         public async Task<IActionResult> Search(
             string? make = null,
             string? model = null,
