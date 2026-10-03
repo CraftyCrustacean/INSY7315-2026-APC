@@ -9,5 +9,9 @@
         public string ImageUrl { get; set; } = string.Empty;
 
         public DateTime UploadedDate { get; set; }
+
+        public int SortOrder { get; set; }
+
+        public bool IsPrimary { get; set; }
     }
 }
