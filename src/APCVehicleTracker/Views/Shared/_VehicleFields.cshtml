@@ -1,0 +1,35 @@
+@model APCVehicleTracker.Models.VehicleFormViewModel
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Make" class="form-label"></label>
+        <input asp-for="Make" class="form-control" maxlength="50" />
+        <span asp-validation-for="Make" class="text-danger"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Model" class="form-label"></label>
+        <input asp-for="Model" class="form-control" maxlength="50" />
+        <span asp-validation-for="Model" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Year" class="form-label"></label>
+        <input asp-for="Year" type="number" class="form-control" min="1900" max="2100" />
+        <span asp-validation-for="Year" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Registration" class="form-label"></label>
+        <input asp-for="Registration" class="form-control text-uppercase" maxlength="20" />
+        <span asp-validation-for="Registration" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Vin" class="form-label"></label>
+        <input asp-for="Vin" class="form-control text-uppercase" maxlength="17" />
+        <span asp-validation-for="Vin" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" class="form-select"
+                asp-items="@(new SelectList(Model.AvailableStatuses))"></select>
+        <span asp-validation-for="Status" class="text-danger"></span>
+    </div>
+</div>
