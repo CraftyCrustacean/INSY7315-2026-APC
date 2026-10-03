@@ -1,0 +1,137 @@
+@model APCVehicleTracker.Models.VehicleFormViewModel
+@{
+    ViewData["Title"] = "Edit vehicle";
+    var images = Model.Images.OrderBy(i => i.SortOrder).ToList();
+    var canUpload = images.Count < 5;
+}
+
+@if (TempData["SuccessMessage"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string bad)
+{
+    <div class="alert alert-danger">@bad</div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Edit vehicle</h1>
+    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteVehicleModal">
+        Delete vehicle
+    </button>
+</div>
+
+<form asp-action="Edit" asp-route-id="@Model.VehicleId" method="post">
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+    <partial name="_VehicleFields" model="Model" />
+
+    <div class="mt-3">
+        <label class="form-label">Current location</label>
+        <input class="form-control" value="@(Model.CurrentLocation ?? "Unknown")" disabled />
+        <div class="form-text">
+            Location can only be changed by
+            <a asp-controller="Vehicle" asp-action="LogMovement" asp-route-id="@Model.VehicleId">logging a movement</a>.
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <a asp-controller="Vehicle" asp-action="Details" asp-route-id="@Model.VehicleId" class="btn btn-outline-secondary">Back</a>
+    </div>
+</form>
+
+<hr class="my-4" />
+
+<h2 class="h5">Images <span class="text-muted">(@images.Count of 5)</span></h2>
+<p class="text-muted small">JPEG or PNG, up to 5 MB each. The first image becomes the primary image.</p>
+
+<div class="row g-3 mb-3">
+    @foreach (var (image, index) in images.Select((img, i) => (img, i)))
+    {
+        <div class="col-6 col-md-4 col-lg-3">
+            <div class="card h-100 @(image.IsPrimary ? "border-primary" : "")">
+                <img src="@Url.Action("Get", "Images", new { blobName = image.BlobName, thumb = true })"
+                     class="card-img-top" alt="Vehicle image @(index + 1)" loading="lazy" />
+                <div class="card-body p-2">
+                    @if (image.IsPrimary)
+                    {
+                        <span class="badge bg-primary mb-2">Primary</span>
+                    }
+
+                    <div class="d-flex flex-wrap gap-1">
+                        @if (!image.IsPrimary)
+                        {
+                            <form asp-action="SetPrimary" asp-route-id="@Model.VehicleId" method="post">
+                                <input type="hidden" name="imageId" value="@image.ImageId" />
+                                <button class="btn btn-sm btn-outline-primary">Make primary</button>
+                            </form>
+                        }
+
+                        <form asp-action="MoveImage" asp-route-id="@Model.VehicleId" method="post">
+                            <input type="hidden" name="imageId" value="@image.ImageId" />
+                            <input type="hidden" name="direction" value="up" />
+                            <button class="btn btn-sm btn-outline-secondary" title="Move earlier" disabled="@(index == 0)">&uarr;</button>
+                        </form>
+                        <form asp-action="MoveImage" asp-route-id="@Model.VehicleId" method="post">
+                            <input type="hidden" name="imageId" value="@image.ImageId" />
+                            <input type="hidden" name="direction" value="down" />
+                            <button class="btn btn-sm btn-outline-secondary" title="Move later" disabled="@(index == images.Count - 1)">&darr;</button>
+                        </form>
+
+                        <form asp-action="DeleteImage" asp-route-id="@Model.VehicleId" method="post"
+                              onsubmit="return confirm('Delete this image permanently?');">
+                            <input type="hidden" name="imageId" value="@image.ImageId" />
+                            <button class="btn btn-sm btn-outline-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@if (canUpload)
+{
+    <form asp-action="UploadImages" asp-route-id="@Model.VehicleId" method="post" enctype="multipart/form-data" id="uploadForm">
+        <div class="input-group" style="max-width: 560px;">
+            <input type="file" name="files" class="form-control" accept="image/jpeg,image/png" multiple required id="imageFiles" />
+            <button class="btn btn-primary" type="submit">Upload</button>
+        </div>
+        <div class="text-danger small mt-1" id="uploadError"></div>
+    </form>
+}
+else
+{
+    <div class="alert alert-info">This vehicle has the maximum of 5 images. Delete one to add another.</div>
+}
+
+@await Html.PartialAsync("_DeleteVehicleModal",
+    new APCVehicleTracker.Models.DeleteVehicleModalModel(
+        Model.VehicleId, $"{Model.Year} {Model.Make} {Model.Model} ({Model.Registration})"))
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Convenience only - the API re-validates size, count and file signature.
+        document.getElementById('uploadForm')?.addEventListener('submit', function (e) {
+            const files = document.getElementById('imageFiles').files;
+            const remaining = @(5 - images.Count);
+            const error = document.getElementById('uploadError');
+            error.textContent = '';
+
+            if (files.length > remaining) {
+                error.textContent = 'You can add at most ' + remaining + ' more image(s).';
+                e.preventDefault();
+                return;
+            }
+            for (const f of files) {
+                if (f.size > 5 * 1024 * 1024) {
+                    error.textContent = 'Each image must be 5 MB or smaller.';
+                    e.preventDefault();
+                    return;
+                }
+            }
+        });
+    </script>
+}
