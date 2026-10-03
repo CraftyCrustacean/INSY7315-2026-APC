@@ -25,6 +25,7 @@ namespace APCVehicleTracker.API.Controllers
             [FromQuery] string[]? status = null,
             [FromQuery] int[]? location = null,
             bool includeSold = false,
+            bool inactiveOnly = false,
             int page = 1,
             int pageSize = 25)
         {
@@ -36,6 +37,10 @@ namespace APCVehicleTracker.API.Controllers
             var query = _context.Vehicles
                 .AsNoTracking()
                 .AsQueryable();
+
+            // Active vehicles by default. Admins can request the inactive list (reactivate screen).
+            var showInactive = inactiveOnly && User.IsInRole(StaffRoles.Admin);
+                query = query.Where(v => v.IsActive != showInactive);
 
             // Exclude sold vehicles by default.
             if (!includeSold)
@@ -85,7 +90,8 @@ namespace APCVehicleTracker.API.Controllers
             var images = await _context.VehicleImages
                 .AsNoTracking()
                 .Where(i => vehicleIds.Contains(i.VehicleId))
-                .OrderBy(i => i.UploadedDate)
+                .OrderByDescending(i => i.IsPrimary)
+                .ThenBy(i => i.SortOrder)
                 .ToListAsync();
 
             var results = vehicles.Select(vehicle =>
@@ -148,9 +154,11 @@ namespace APCVehicleTracker.API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetVehicleDetails(int id)
         {
+            var isAdmin = User.IsInRole(StaffRoles.Admin);
+
             var vehicle = await _context.Vehicles
                 .AsNoTracking()
-                .FirstOrDefaultAsync(v => v.VehicleId == id);
+                .FirstOrDefaultAsync(v => v.VehicleId == id && (v.IsActive || isAdmin));
 
             if (vehicle == null)
             {
@@ -178,17 +186,25 @@ namespace APCVehicleTracker.API.Controllers
                     (int)(DateTime.UtcNow - latestMovement.MovementDateTime).TotalDays;
             }
 
-            var primaryImage = await _context.VehicleImages
+            var images = await _context.VehicleImages
                 .AsNoTracking()
                 .Where(i => i.VehicleId == id)
-                .OrderBy(i => i.UploadedDate)
-                .Select(i => i.ImageUrl)
-                .FirstOrDefaultAsync();
+                .OrderBy(i => i.SortOrder)
+                .Select(i => new VehicleImageDto
+                {
+                    ImageId = i.VehicleImageId,
+                    BlobName = i.ImageUrl,
+                    SortOrder = i.SortOrder,
+                    IsPrimary = i.IsPrimary
+                })
+                .ToListAsync();
 
             var result = new VehicleDetailsDto
             {
                 VehicleId = vehicle.VehicleId,
-                PrimaryImage = primaryImage,
+                PrimaryImage = images.FirstOrDefault(i => i.IsPrimary)?.BlobName,
+                IsActive = vehicle.IsActive,
+                Images = images,
                 Make = vehicle.Make,
                 Model = vehicle.Model,
                 Year = vehicle.Year,
@@ -286,6 +302,11 @@ namespace APCVehicleTracker.API.Controllers
             if (vehicle == null)
             {
                 return NotFound("Vehicle not found.");
+            }
+
+            if (!vehicle.IsActive)
+            {
+                return BadRequest("Inactive vehicles cannot have movements logged.");
             }
 
             // Sold vehicles cannot be moved.
@@ -415,7 +436,7 @@ namespace APCVehicleTracker.API.Controllers
         {
             var makes = await _context.Vehicles
                 .AsNoTracking()
-                .Where(v => v.Status != "Sold")
+                .Where(v => v.IsActive && v.Status != "Sold")
                 .Select(v => v.Make)
                 .Distinct()
                 .OrderBy(m => m)
@@ -429,7 +450,7 @@ namespace APCVehicleTracker.API.Controllers
         {
             var query = _context.Vehicles
                 .AsNoTracking()
-                .Where(v => v.Status != "Sold");
+                .Where(v => v.IsActive && v.Status != "Sold");
 
             if (!string.IsNullOrWhiteSpace(make))
             {
