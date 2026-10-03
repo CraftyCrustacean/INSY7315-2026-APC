@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 
 namespace APCVehicleTracker.Services
 {
-    public class VehicleApiService
+    public partial class VehicleApiService
     {
         private readonly HttpClient _httpClient;
 
