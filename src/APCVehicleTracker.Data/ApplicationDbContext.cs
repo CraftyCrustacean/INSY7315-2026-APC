@@ -48,6 +48,14 @@ namespace APCVehicleTracker.Data
 
                 entity.Property(v => v.Status)
                     .HasColumnName("status");
+
+                entity.Property(v => v.IsActive)
+                    .HasColumnName("is_active");
+
+                entity.HasIndex(v => v.Registration)
+                    .IsUnique()
+                    .HasDatabaseName("ux_vehicle_registration");
+
             });
 
             modelBuilder.Entity<Location>(entity =>
@@ -125,6 +133,18 @@ namespace APCVehicleTracker.Data
 
                 entity.Property(v => v.UploadedDate)
                     .HasColumnName("uploaded_date");
+
+                entity.Property(v => v.SortOrder)
+                    .HasColumnName("sort_order");
+
+                entity.Property(v => v.IsPrimary)
+                    .HasColumnName("is_primary");
+
+                // At most one primary image per vehicle.
+                entity.HasIndex(v => v.VehicleId)
+                    .IsUnique()
+                    .HasFilter("is_primary = true")
+                    .HasDatabaseName("ux_vehicle_image_primary"); 
             });
         }
     }
