@@ -19,6 +19,12 @@ else
 
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="card card-vehicle shadow-sm h-100">
+                @if (!string.IsNullOrWhiteSpace(v.PrimaryImage))
+                    {
+                        <img src="@Url.Action("Get", "Images", new { blobName = v.PrimaryImage, thumb = true })"
+                             class="card-img-top" alt="@v.Make @v.Model" loading="lazy"
+                             style="height:160px; object-fit:cover;" />
+                    }
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start">
                             <h5 class="card-title">@v.Make @v.Model</h5>
