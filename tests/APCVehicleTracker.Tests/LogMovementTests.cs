@@ -2,16 +2,27 @@
 using APCVehicleTracker.API.DTOs;
 using APCVehicleTracker.Data;
 using APCVehicleTracker.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System.Security.Claims;
+using APCVehicleTracker.Data.Auth;
 
 namespace APCVehicleTracker.Tests
 {
     public class LogMovementTests
     {
+        private static IAuthorizationService BuildAuthService()
+        {
+            var services = new ServiceCollection();
+            services.AddLogging();
+            services.AddAppAuthorization();
+            return services.BuildServiceProvider().GetRequiredService<IAuthorizationService>();
+        }
+
         private static async Task<(ApplicationDbContext Context, SqliteConnection Connection)>
             CreateDatabaseAsync()
         {
@@ -130,7 +141,7 @@ namespace APCVehicleTracker.Tests
 
                 var seeded = await SeedVehicleAsync(context);
 
-                var controller = new VehiclesController(context);
+                var controller = new VehiclesController(context, BuildAuthService());
 
                 SetUserWithStaffId(controller, 1);
 
@@ -196,7 +207,7 @@ namespace APCVehicleTracker.Tests
 
                 var seeded = await SeedVehicleAsync(context);
 
-                var controller = new VehiclesController(context);
+                var controller = new VehiclesController(context, BuildAuthService());
 
                 SetUserWithStaffId(controller, 1);
 
@@ -238,7 +249,7 @@ namespace APCVehicleTracker.Tests
                 seeded.Vehicle.Status = "Sold";
                 await context.SaveChangesAsync();
 
-                var controller = new VehiclesController(context);
+                var controller = new VehiclesController(context, BuildAuthService());
 
                 SetUserWithStaffId(controller, 1);
 
@@ -280,7 +291,7 @@ namespace APCVehicleTracker.Tests
 
                 var seeded = await SeedVehicleAsync(context);
 
-                var controller = new VehiclesController(context);
+                var controller = new VehiclesController(context, BuildAuthService());
 
                 SetUserWithStaffId(controller, 1);
 
@@ -322,7 +333,7 @@ namespace APCVehicleTracker.Tests
 
                 var seeded = await SeedVehicleAsync(context);
 
-                var controller = new VehiclesController(context);
+                var controller = new VehiclesController(context, BuildAuthService());
 
                 SetUserWithStaffId(controller, 1);
 
@@ -360,7 +371,7 @@ namespace APCVehicleTracker.Tests
 
                 var seeded = await SeedVehicleAsync(context);
 
-                var controller = new VehiclesController(context);
+                var controller = new VehiclesController(context, BuildAuthService());
 
                 SetUserWithStaffId(controller, 1);
 
@@ -397,7 +408,7 @@ namespace APCVehicleTracker.Tests
             {
                 var seeded = await SeedVehicleAsync(context);
 
-                var controller = new VehiclesController(context);
+                var controller = new VehiclesController(context, BuildAuthService());
 
                 var identity = new ClaimsIdentity(
                     Array.Empty<Claim>(),
