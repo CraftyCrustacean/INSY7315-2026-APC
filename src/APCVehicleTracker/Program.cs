@@ -39,6 +39,11 @@ builder.Services.AddHttpClient<StaffApiService>(client =>
     client.BaseAddress = new Uri(builder.Configuration["VehicleApi:BaseUrl"]!);
 }).AddHttpMessageHandler<ApiTokenHandler>();
 
+builder.Services.AddHttpClient("Api", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["VehicleApi:BaseUrl"]!);
+}).AddHttpMessageHandler<ApiTokenHandler>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
