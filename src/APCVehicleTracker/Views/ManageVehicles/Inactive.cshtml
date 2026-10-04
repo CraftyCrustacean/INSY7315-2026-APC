@@ -1,0 +1,46 @@
+@model List<APCVehicleTracker.Models.Vehicle>
+@{
+    ViewData["Title"] = "Inactive vehicles";
+}
+
+@if (TempData["SuccessMessage"] is string ok)
+{
+    <div class="alert alert-success">@ok</div>
+}
+@if (TempData["ErrorMessage"] is string bad)
+{
+    <div class="alert alert-danger">@bad</div>
+}
+
+<h1 class="h3 mb-3">Inactive vehicles</h1>
+
+@if (!Model.Any())
+{
+    <p class="text-muted">There are no inactive vehicles.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr><th>Registration</th><th>Vehicle</th><th>Status</th><th>Last location</th><th></th></tr>
+            </thead>
+            <tbody>
+            @foreach (var v in Model)
+            {
+                <tr>
+                    <td>@v.RegistrationNumber</td>
+                    <td>@v.Year @v.Make @v.Model</td>
+                    <td>@v.Status</td>
+                    <td>@v.CurrentLocation</td>
+                    <td class="text-end">
+                        <form asp-action="Reactivate" asp-route-id="@v.Id" method="post">
+                            <button class="btn btn-sm btn-success">Reactivate</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
