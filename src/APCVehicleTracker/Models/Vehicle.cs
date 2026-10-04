@@ -11,5 +11,7 @@
         public string CurrentLocation { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty; // e.g. In Stock, Sold, In Workshop
         public DateTime LastMoved { get; set; }
+        public string? PrimaryImage { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 }
