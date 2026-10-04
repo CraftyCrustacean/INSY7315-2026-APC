@@ -1,14 +1,16 @@
 ﻿namespace APCVehicleTracker.Controllers;
-using System.Net.Http.Json;
+using APCVehicleTracker.Data.Auth;
 using APCVehicleTracker.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Net.Http.Json;
 
 
 
-    [Authorize(Roles = "Admin,Branch Manager")]
-    public class ReportsController : Controller
+
+[Authorize(Policy = AuthPolicies.CanViewReports)]
+public class ReportsController : Controller
     {
         private readonly IHttpClientFactory _factory;
         public ReportsController(IHttpClientFactory factory) => _factory = factory;

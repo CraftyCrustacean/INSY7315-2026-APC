@@ -1,6 +1,7 @@
 ﻿namespace APCVehicleTracker.API.Controllers;
 
 using APCVehicleTracker.Data;
+using APCVehicleTracker.Data.Auth;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +10,7 @@ using System.Text;
 
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(Roles = "Admin,Branch Manager")]
+    [Authorize(Policy = AuthPolicies.CanViewReports)]
 
 public class ReportsController : ControllerBase
     {
@@ -66,7 +67,7 @@ public class ReportsController : ControllerBase
             var rows = await GetRowsAsync();
             return Ok(new
             {
-                totalInStock = rows.Count(r => r.Status == "In Stock"),
+                totalInStock = rows.Count(r => r.Status == "Available" || r.Status == "In Workshop"),
                 totalInWorkshop = rows.Count(r => r.Status == "In Workshop"),
                 stuckVehicles = rows.Count(r => r.LastMoved.HasValue && DaysSince(r.LastMoved) > stuckDays)
             });
