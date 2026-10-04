@@ -1,19 +1,55 @@
-﻿@model APCVehicleTracker.Models.Vehicle
+﻿@using Microsoft.AspNetCore.Authorization
+@inject IAuthorizationService AuthorizationService
+@model APCVehicleTracker.Models.Vehicle
 @{
     ViewData["Title"] = "Vehicle Details";
     var history = ViewBag.MovementHistory as List<APCVehicleTracker.Models.MovementRecord>;
+    var canLogMovements =
+        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanLogMovements)).Succeeded;
+    var canEditVehicles =
+        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanEditVehicles)).Succeeded;
+    var canReactivate =
+        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanReactivateVehicles)).Succeeded;
 }
 
 <div class="row">
     <div class="col-12 col-lg-5">
         <div class="card shadow-sm mb-3">
+         @if (!string.IsNullOrWhiteSpace(Model.PrimaryImage))
+            {
+                <img src="@Url.Action("Get", "Images", new { blobName = Model.PrimaryImage })"
+                     class="card-img-top"
+                     alt="@Model.Make @Model.Model"
+                     style="max-height:320px; object-fit:cover;" />
+            }
             <div class="card-body">
+            @if (!Model.IsActive)
+                {
+                    <div class="alert alert-warning py-2">This vehicle is inactive (deleted).</div>
+                }
                 <h4>@Model.Make @Model.Model (@Model.Year)</h4>
                 <p><strong>Registration:</strong> @Model.RegistrationNumber</p>
                 <p><strong>VIN:</strong> @Model.VinNumber</p>
                 <p><strong>Current Location:</strong> @Model.CurrentLocation</p>
                 <p><strong>Status:</strong> @Model.Status</p>
-                <a asp-action="LogMovement" asp-route-id="@Model.Id" class="btn btn-apc">Log New Movement</a>
+
+                @if (Model.IsActive && canLogMovements && Model.Status != "Sold")
+                {
+                    <a asp-action="LogMovement" asp-route-id="@Model.Id" class="btn btn-apc">Log New Movement</a>
+                }
+                @if (Model.IsActive && canEditVehicles)
+                {
+                    <a asp-controller="ManageVehicles" asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit</a>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteVehicleModal">Delete</button>
+                }
+                @if (!Model.IsActive && canReactivate)
+                {
+                    <form asp-controller="ManageVehicles" asp-action="Reactivate" asp-route-id="@Model.Id" method="post" class="d-inline">
+                        <button type="submit" class="btn btn-success">Reactivate</button>
+                    </form>
+                }
+
+                <a asp-action="Search" class="btn btn-outline-secondary">Back to Search</a>
             </div>
         </div>
     </div>
@@ -48,3 +84,9 @@
         }
     </div>
 </div>
+@if (Model.IsActive && canEditVehicles)
+{
+    @await Html.PartialAsync("_DeleteVehicleModal",
+        new APCVehicleTracker.Models.DeleteVehicleModalModel(
+            Model.Id, $"{Model.Year} {Model.Make} {Model.Model} ({Model.RegistrationNumber})"))
+}

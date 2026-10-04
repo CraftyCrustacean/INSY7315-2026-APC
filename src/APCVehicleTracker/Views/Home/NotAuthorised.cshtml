@@ -1,2 +1,20 @@
-﻿<h1>Access not granted</h1>
-<p>Your account isn't set up for this system. Contact an administrator.</p>
+﻿@{
+    ViewData["Title"] = "Access not granted";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm border-warning">
+            <div class="card-body text-center py-5">
+                <h1 class="h3 mb-3">Access not granted</h1>
+                <p class="mb-4">Your account isn't set up for this system. Contact an administrator.</p>
+                <a asp-area="MicrosoftIdentity"
+                   asp-controller="Account"
+                   asp-action="SignIn"
+                   class="btn btn-apc">
+                    Sign in with a different account
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

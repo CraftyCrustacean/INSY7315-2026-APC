@@ -14,4 +14,6 @@ jobs:
           dotnet-version: '10.0.x'
       - run: dotnet restore
       - run: dotnet build --no-restore -c Release
+        env:
+          SixLaborsLicenseFile: ${{ github.workspace }}/sixlabors.lic
       - run: dotnet test --no-build -c Release

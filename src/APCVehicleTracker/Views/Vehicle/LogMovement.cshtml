@@ -1,5 +1,4 @@
-﻿
-@model APCVehicleTracker.Models.Vehicle
+﻿@model APCVehicleTracker.Models.Vehicle
 
 @{
     ViewData["Title"] = "Log Movement";
@@ -24,8 +23,6 @@
               asp-action="LogMovement"
               asp-route-id="@Model.Id"
               method="post">
-
-            @Html.AntiForgeryToken()
 
             <div asp-validation-summary="ModelOnly"
                  class="text-danger mb-3">
@@ -66,9 +63,7 @@
                     }
                 </select>
 
-                <span class="text-danger"
-                      data-valmsg-for="toLocationId">
-                </span>
+                @Html.ValidationMessage("toLocationId", new { @class = "text-danger" })
             </div>
 
             <div class="mb-3">
@@ -109,9 +104,7 @@
                     Maximum 500 characters.
                 </div>
 
-                <span class="text-danger"
-                      data-valmsg-for="notes">
-                </span>
+                @Html.ValidationMessage("notes", new { @class = "text-danger" })
             </div>
 
             <button type="submit"
@@ -127,7 +120,3 @@
         </form>
     </div>
 </div>
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-}

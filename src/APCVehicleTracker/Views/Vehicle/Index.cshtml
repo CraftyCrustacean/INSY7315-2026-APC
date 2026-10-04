@@ -1,29 +1,60 @@
-﻿@model List<APCVehicleTracker.Models.Vehicle>
+﻿@using Microsoft.AspNetCore.Authorization
+@using APCVehicleTracker.Data.Auth
+@model List<APCVehicleTracker.Models.Vehicle>
+@inject IAuthorizationService AuthorizationService
 @{
     ViewData["Title"] = "Dashboard";
+    var canEditVehicles =
+        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanEditVehicles)).Succeeded;
 }
 
-<h2 class="mb-4">Vehicle Stock Dashboard</h2>
-
-<div class="row g-3">
-    @foreach (var v in Model)
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Vehicle Stock Dashboard</h2>
+    @if (canEditVehicles)
     {
-        var statusClass = v.Status == "In Stock" ? "status-instock" :
-                           v.Status == "Under Repair" ? "status-workshop" : "status-other";
-
-        <div class="col-12 col-md-6 col-lg-4">
-            <div class="card card-vehicle shadow-sm h-100">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start">
-                        <h5 class="card-title">@v.Make @v.Model</h5>
-                        <span class="badge badge-status @statusClass">@v.Status</span>
-                    </div>
-                    <p class="card-text mb-1"><strong>Reg:</strong> @v.RegistrationNumber</p>
-                    <p class="card-text mb-1"><strong>Location:</strong> @v.CurrentLocation</p>
-                    <p class="card-text text-muted small">Last moved: @v.LastMoved.ToString("dd MMM yyyy HH:mm")</p>
-                    <a asp-action="Details" asp-route-id="@v.Id" class="btn btn-apc btn-sm mt-2">View Details</a>
-                </div>
-            </div>
-        </div>
+        <a asp-controller="ManageVehicles" asp-action="Create" class="btn btn-apc">Add Vehicle</a>
     }
 </div>
+
+@if (Model == null || !Model.Any())
+{
+    <p class="text-muted">No vehicles found.</p>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var v in Model)
+        {
+            var statusClass = v.Status == "Available" ? "status-instock" :
+                              v.Status == "In Workshop" ? "status-workshop" : "status-other";
+
+            <div class="col-12 col-md-6 col-lg-4">
+                <div class="card card-vehicle shadow-sm h-100">
+                    @if (!string.IsNullOrWhiteSpace(v.PrimaryImage))
+                    {
+                        <img src="@Url.Action("Get", "Images", new { blobName = v.PrimaryImage, thumb = true })"
+                             class="card-img-top" alt="@v.Make @v.Model" loading="lazy"
+                             style="height:160px; object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <div class="card-img-top bg-light text-muted d-flex align-items-center justify-content-center"
+                             style="height:160px;">No image</div>
+                    }
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title">@v.Make @v.Model</h5>
+                            <span class="badge badge-status @statusClass">@v.Status</span>
+                        </div>
+                        <p class="card-text mb-1"><strong>Reg:</strong> @v.RegistrationNumber</p>
+                        <p class="card-text mb-1"><strong>Location:</strong> @(string.IsNullOrWhiteSpace(v.CurrentLocation) ? "Unknown" : v.CurrentLocation)</p>
+                        <p class="card-text text-muted small">
+                            Last moved: @(v.LastMoved == DateTime.MinValue ? "Not yet moved" : v.LastMoved.ToString("dd MMM yyyy"))
+                        </p>
+                        <a asp-action="Details" asp-route-id="@v.Id" class="btn btn-apc btn-sm mt-2">View Details</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

@@ -18,8 +18,12 @@
 
         public string Status { get; set; } = string.Empty;
 
+        public bool IsActive { get; set; }
+
         public string? CurrentLocation { get; set; }
 
         public int? DaysAtCurrentLocation { get; set; }
+
+        public List<VehicleImageDto> Images { get; set; } = new();
     }
 }
