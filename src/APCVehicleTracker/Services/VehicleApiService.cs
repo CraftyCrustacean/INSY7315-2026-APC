@@ -4,7 +4,7 @@ using System.Net.Http.Json;
 
 namespace APCVehicleTracker.Services
 {
-    public class VehicleApiService
+    public partial class VehicleApiService
     {
         private readonly HttpClient _httpClient;
 
@@ -115,6 +115,7 @@ namespace APCVehicleTracker.Services
 
             return new Vehicle
             {
+                PrimaryImage = result.PrimaryImage,
                 Id = result.VehicleId,
                 RegistrationNumber = result.Registration,
                 Make = result.Make,
@@ -145,10 +146,6 @@ namespace APCVehicleTracker.Services
                 request);
         }
 
-        // ---------- NEW: used by the Dashboard (Index) and Reports pages ----------
-
-        // The API returns 25 vehicles per page, so keep requesting pages until
-        // every vehicle has been loaded.
         public async Task<List<Vehicle>> GetAllVehiclesAsync(bool includeSold = false)
         {
             var vehicles = new List<Vehicle>();
@@ -177,8 +174,6 @@ namespace APCVehicleTracker.Services
 
             return vehicles;
         }
-
-        // ---------- NEW: used by the Details page ----------
 
         public async Task<List<MovementRecord>> GetMovementHistoryAsync(int vehicleId)
         {
@@ -210,6 +205,7 @@ namespace APCVehicleTracker.Services
         {
             return new Vehicle
             {
+                PrimaryImage = item.PrimaryImage,
                 Id = item.VehicleId,
                 RegistrationNumber = item.Registration,
                 Make = item.Make,
@@ -217,8 +213,6 @@ namespace APCVehicleTracker.Services
                 Year = item.Year,
                 CurrentLocation = item.CurrentLocation ?? string.Empty,
                 Status = item.Status,
-                // The API only gives "days at current location", so work back
-                // to a date. A vehicle with no movements keeps DateTime.MinValue.
                 LastMoved = item.DaysAtCurrentLocation.HasValue
                     ? DateTime.UtcNow.Date.AddDays(-item.DaysAtCurrentLocation.Value)
                     : DateTime.MinValue
@@ -272,6 +266,7 @@ namespace APCVehicleTracker.Services
             public string? CurrentLocation { get; set; }
 
             public int? DaysAtCurrentLocation { get; set; }
+            public string? PrimaryImage { get; set; }
         }
 
         private sealed class MovementHistoryApiResponse

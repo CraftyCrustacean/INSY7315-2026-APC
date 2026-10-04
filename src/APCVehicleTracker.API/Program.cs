@@ -5,7 +5,7 @@ using APCVehicleTracker.Data;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+builder.Services.AddVehicleImageStorage(builder.Configuration);
 builder.Services.AddAppDatabase(builder.Configuration);
 builder.Services.AddApiAuthentication(builder.Configuration);
 builder.Services.AddStaffAdmin();

@@ -1,0 +1,24 @@
+@model APCVehicleTracker.Models.DeleteVehicleModalModel
+
+@* Usage: add a button with data-bs-toggle="modal" data-bs-target="#deleteVehicleModal" and render this partial once on the page. *@
+<div class="modal fade" id="deleteVehicleModal" tabindex="-1" aria-labelledby="deleteVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form asp-controller="ManageVehicles" asp-action="Deactivate" asp-route-id="@Model.VehicleId" method="post" class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="deleteVehicleModalLabel">Delete vehicle?</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong>@Model.Description</strong>?</p>
+                <p class="text-muted small mb-0">
+                    The vehicle will be hidden from search and reports. Its movement history and images are kept,
+                    and an admin can reactivate it later.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-danger">Delete vehicle</button>
+            </div>
+        </form>
+    </div>
+</div>

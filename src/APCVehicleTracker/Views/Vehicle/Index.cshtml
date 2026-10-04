@@ -1,9 +1,20 @@
-﻿@model List<APCVehicleTracker.Models.Vehicle>
+﻿@using Microsoft.AspNetCore.Authorization
+@using APCVehicleTracker.Data.Auth
+@model List<APCVehicleTracker.Models.Vehicle>
+@inject IAuthorizationService AuthorizationService
 @{
     ViewData["Title"] = "Dashboard";
+    var canEditVehicles =
+        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanEditVehicles)).Succeeded;
 }
 
-<h2 class="mb-4">Vehicle Stock Dashboard</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Vehicle Stock Dashboard</h2>
+    @if (canEditVehicles)
+    {
+        <a asp-controller="ManageVehicles" asp-action="Create" class="btn btn-apc">Add Vehicle</a>
+    }
+</div>
 
 @if (Model == null || !Model.Any())
 {
@@ -19,6 +30,17 @@ else
 
             <div class="col-12 col-md-6 col-lg-4">
                 <div class="card card-vehicle shadow-sm h-100">
+                    @if (!string.IsNullOrWhiteSpace(v.PrimaryImage))
+                    {
+                        <img src="@Url.Action("Get", "Images", new { blobName = v.PrimaryImage, thumb = true })"
+                             class="card-img-top" alt="@v.Make @v.Model" loading="lazy"
+                             style="height:160px; object-fit:cover;" />
+                    }
+                    else
+                    {
+                        <div class="card-img-top bg-light text-muted d-flex align-items-center justify-content-center"
+                             style="height:160px;">No image</div>
+                    }
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start">
                             <h5 class="card-title">@v.Make @v.Model</h5>

@@ -23,15 +23,35 @@
 
     var canLogMovements =
         (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanLogMovements)).Succeeded;
+    var canEditVehicles =
+        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanEditVehicles)).Succeeded;
+    var canReactivate =
+        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanReactivateVehicles)).Succeeded;
 }
 
 <div class="container mt-4">
 
     <h1 class="mb-4">Vehicle Search</h1>
 
+    <div class="d-flex gap-2">
+            @if (canEditVehicles)
+            {
+                <a asp-controller="ManageVehicles" asp-action="Create" class="btn btn-apc">Add Vehicle</a>
+            }
+            @if (canReactivate)
+            {
+                <a asp-controller="ManageVehicles" asp-action="Inactive" class="btn btn-outline-secondary">Inactive Vehicles</a>
+            }
+        </div>
+    </div>
+
     @if (TempData["SuccessMessage"] is string successMessage)
     {
         <div class="alert alert-success">@successMessage</div>
+    }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="alert alert-danger">@errorMessage</div>
     }
 
     <form method="get" asp-controller="Vehicle" asp-action="Search">
@@ -165,10 +185,12 @@
 
                         @if (!string.IsNullOrWhiteSpace(vehicle.PrimaryImage))
                         {
-                            <img src="@vehicle.PrimaryImage"
+                            <img src="@Url.Action("Get", "Images", new { blobName = vehicle.PrimaryImage, thumb = true })"
+                                 loading="lazy"
                                  class="card-img-top"
                                  alt="@vehicle.Make @vehicle.Model"
                                  style="height:220px; object-fit:cover;" />
+
                         }
 
                         <div class="card-body">
@@ -202,6 +224,16 @@
                                    asp-route-id="@vehicle.VehicleId"
                                    class="btn btn-apc">
                                     Log Movement
+                                </a>
+                            }
+                            @* Chase Miller - Feature 5: CRUD *@
+                            @if (canEditVehicles)
+                            {
+                                <a asp-controller="ManageVehicles"
+                                   asp-action="Edit"
+                                   asp-route-id="@vehicle.VehicleId"
+                                   class="btn btn-outline-primary">
+                                    Edit
                                 </a>
                             }
 
