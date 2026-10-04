@@ -7,6 +7,8 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    env:
+      SixLaborsLicenseKey: ${{ secrets.SIXLABORS_LICENSE_KEY}}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
