@@ -40,16 +40,25 @@ namespace APCVehicleTracker.Tests
             return (context, connection);
         }
 
+        // Builds a signed-in user. The role is what the CanLogMovements policy checks,
+        // so pass role: null to test a user without permission.
         private static void SetUserWithStaffId(
             VehiclesController controller,
-            int staffId)
+            int staffId,
+            string? role = "Admin")
         {
-            var identity = new ClaimsIdentity(
-                new[]
-                {
-                    new Claim("staff_id", staffId.ToString())
-                },
-                "TestAuthentication");
+            var claims = new List<Claim>
+            {
+                new Claim("staff_id", staffId.ToString())
+            };
+
+            if (role != null)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, role));
+                claims.Add(new Claim("role", role));
+            }
+
+            var identity = new ClaimsIdentity(claims, "TestAuthentication");
 
             controller.ControllerContext = new ControllerContext
             {
@@ -128,6 +137,37 @@ namespace APCVehicleTracker.Tests
             await context.SaveChangesAsync();
 
             return (vehicle, currentLocation, destination);
+        }
+
+        // A vehicle that has never been moved, so it has no current location.
+        private static async Task<(Vehicle Vehicle, Location Destination)>
+            SeedVehicleWithoutMovementAsync(ApplicationDbContext context)
+        {
+            var destination = new Location
+            {
+                LocationId = 2,
+                LocationName = "Workshop",
+                LocationType = "Workshop",
+                Address = "Test Address 2"
+            };
+
+            var vehicle = new Vehicle
+            {
+                VehicleId = 1,
+                Make = "Toyota",
+                Model = "Hilux",
+                Year = 2025,
+                Registration = "TEST123",
+                Vin = "TESTVIN123",
+                Status = "Available"
+            };
+
+            context.Locations.Add(destination);
+            context.Vehicles.Add(vehicle);
+
+            await context.SaveChangesAsync();
+
+            return (vehicle, destination);
         }
 
         [Fact]
@@ -410,8 +450,13 @@ namespace APCVehicleTracker.Tests
 
                 var controller = new VehiclesController(context, BuildAuthService());
 
+                // Has permission (role) but no staff_id claim.
                 var identity = new ClaimsIdentity(
-                    Array.Empty<Claim>(),
+                    new[]
+                    {
+                        new Claim(ClaimTypes.Role, "Admin"),
+                        new Claim("role", "Admin")
+                    },
                     "TestAuthentication");
 
                 controller.ControllerContext = new ControllerContext
@@ -437,6 +482,135 @@ namespace APCVehicleTracker.Tests
                 Assert.Equal(
                     "Authenticated staff member could not be identified.",
                     unauthorized.Value);
+            }
+            finally
+            {
+                await context.DisposeAsync();
+                await connection.DisposeAsync();
+            }
+        }
+
+        // NEW: a user without the CanLogMovements permission is refused (403).
+        [Fact]
+        public async Task LogMovement_ReturnsForbidWhenUserLacksPermission()
+        {
+            var (context, connection) = await CreateDatabaseAsync();
+
+            try
+            {
+                await SeedStaffAsync(context);
+
+                var seeded = await SeedVehicleAsync(context);
+
+                var controller = new VehiclesController(context, BuildAuthService());
+
+                SetUserWithStaffId(controller, 1, role: null);
+
+                var request = new LogMovementRequestDto
+                {
+                    ToLocationId = seeded.Destination.LocationId
+                };
+
+                var result = await controller.LogMovement(
+                    seeded.Vehicle.VehicleId,
+                    request);
+
+                Assert.IsType<ForbidResult>(result);
+
+                var movementCount = await context.Movements.CountAsync();
+
+                Assert.Equal(1, movementCount);
+            }
+            finally
+            {
+                await context.DisposeAsync();
+                await connection.DisposeAsync();
+            }
+        }
+
+        // NEW: a brand-new vehicle with no movements can get its first movement.
+        [Fact]
+        public async Task LogMovement_AllowsFirstMovementForVehicleWithNoMovements()
+        {
+            var (context, connection) = await CreateDatabaseAsync();
+
+            try
+            {
+                await SeedStaffAsync(context);
+
+                var seeded = await SeedVehicleWithoutMovementAsync(context);
+
+                var controller = new VehiclesController(context, BuildAuthService());
+
+                SetUserWithStaffId(controller, 1);
+
+                var request = new LogMovementRequestDto
+                {
+                    ToLocationId = seeded.Destination.LocationId,
+                    Notes = "First placement"
+                };
+
+                var result = await controller.LogMovement(
+                    seeded.Vehicle.VehicleId,
+                    request);
+
+                Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(result);
+
+                var movement = await context.Movements.SingleAsync();
+
+                Assert.Null(movement.FromLocationId);
+
+                Assert.Equal(
+                    seeded.Destination.LocationId,
+                    movement.ToLocationId);
+
+                Assert.Equal(1, movement.StaffId);
+            }
+            finally
+            {
+                await context.DisposeAsync();
+                await connection.DisposeAsync();
+            }
+        }
+
+        // NEW: inactive (deleted) vehicles cannot be moved.
+        [Fact]
+        public async Task LogMovement_RejectsInactiveVehicle()
+        {
+            var (context, connection) = await CreateDatabaseAsync();
+
+            try
+            {
+                await SeedStaffAsync(context);
+
+                var seeded = await SeedVehicleAsync(context);
+
+                seeded.Vehicle.IsActive = false;
+                await context.SaveChangesAsync();
+
+                var controller = new VehiclesController(context, BuildAuthService());
+
+                SetUserWithStaffId(controller, 1);
+
+                var request = new LogMovementRequestDto
+                {
+                    ToLocationId = seeded.Destination.LocationId
+                };
+
+                var result = await controller.LogMovement(
+                    seeded.Vehicle.VehicleId,
+                    request);
+
+                var badRequest =
+                    Assert.IsType<Microsoft.AspNetCore.Mvc.BadRequestObjectResult>(result);
+
+                Assert.Equal(
+                    "Inactive vehicles cannot have movements logged.",
+                    badRequest.Value);
+
+                var movementCount = await context.Movements.CountAsync();
+
+                Assert.Equal(1, movementCount);
             }
             finally
             {
