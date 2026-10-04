@@ -1,5 +1,7 @@
 ﻿using APCVehicleTracker.API.DTOs;
 using APCVehicleTracker.Data;
+using APCVehicleTracker.Data.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,11 +12,15 @@ namespace APCVehicleTracker.API.Controllers
     public class VehiclesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAuthorizationService _authorizationService;
 
-        public VehiclesController(ApplicationDbContext context)
+        public VehiclesController(ApplicationDbContext context,IAuthorizationService authorizationService)
         {
             _context = context;
+            _authorizationService = authorizationService;
         }
+
+        private async Task<bool> IsAdminAsync() => (await _authorizationService.AuthorizeAsync(User, AuthPolicies.CanReactivateVehicles)).Succeeded;
 
         [HttpGet]
         public async Task<IActionResult> SearchVehicles(
@@ -38,30 +44,24 @@ namespace APCVehicleTracker.API.Controllers
                 .AsNoTracking()
                 .AsQueryable();
 
-            // Active vehicles by default. Admins can request the inactive list (reactivate screen).
-            var showInactive = inactiveOnly && User.IsInRole(StaffRoles.Admin);
+            var showInactive = inactiveOnly && await IsAdminAsync();
                 query = query.Where(v => v.IsActive != showInactive);
 
-            // Exclude sold vehicles by default.
             if (!includeSold)
                 query = query.Where(v => v.Status != "Sold");
 
-            // Make filter.
             if (!string.IsNullOrWhiteSpace(make))
                 query = query.Where(v => v.Make == make);
 
-            // Model filter.
             if (!string.IsNullOrWhiteSpace(model))
                 query = query.Where(v => v.Model == model);
 
-            // Year filters.
             if (yearFrom.HasValue)
                 query = query.Where(v => v.Year >= yearFrom.Value);
 
             if (yearTo.HasValue)
                 query = query.Where(v => v.Year <= yearTo.Value);
 
-            // Status filter.
             if (status != null && status.Length > 0)
                 query = query.Where(v => status.Contains(v.Status));
 
@@ -129,7 +129,6 @@ namespace APCVehicleTracker.API.Controllers
                 };
             }).ToList();
 
-            // Location filter.
             if (location != null && location.Length > 0)
             {
                 results = results
@@ -154,7 +153,7 @@ namespace APCVehicleTracker.API.Controllers
         [HttpGet("{id}")]
         public async Task<IActionResult> GetVehicleDetails(int id)
         {
-            var isAdmin = User.IsInRole(StaffRoles.Admin);
+            var isAdmin = await IsAdminAsync();
 
             var vehicle = await _context.Vehicles
                 .AsNoTracking()
@@ -309,13 +308,11 @@ namespace APCVehicleTracker.API.Controllers
                 return BadRequest("Inactive vehicles cannot have movements logged.");
             }
 
-            // Sold vehicles cannot be moved.
             if (vehicle.Status == "Sold")
             {
                 return BadRequest("Sold vehicles cannot have movements logged.");
             }
 
-            // Determine the current location from the latest movement.
             var latestMovement = await _context.Movements
                 .Where(m => m.VehicleId == id)
                 .OrderByDescending(m => m.MovementDateTime)
@@ -328,7 +325,6 @@ namespace APCVehicleTracker.API.Controllers
 
             var fromLocationId = latestMovement.ToLocationId;
 
-            // Validate destination exists.
             var destination = await _context.Locations
                 .AsNoTracking()
                 .FirstOrDefaultAsync(l => l.LocationId == request.ToLocationId);
@@ -338,14 +334,12 @@ namespace APCVehicleTracker.API.Controllers
                 return BadRequest("Destination location does not exist.");
             }
 
-            // Destination must be different from current location.
             if (request.ToLocationId == fromLocationId)
             {
                 return BadRequest(
                     "Destination must be different from the current location.");
             }
 
-            // Get StaffId from the authenticated user's claim.
             var staffIdClaim = User.FindFirst("staff_id");
 
             if (staffIdClaim == null ||
@@ -355,14 +349,12 @@ namespace APCVehicleTracker.API.Controllers
                     "Authenticated staff member could not be identified.");
             }
 
-            // Validate notes.
             if (!string.IsNullOrWhiteSpace(request.Notes) &&
                 request.Notes.Length > 500)
             {
                 return BadRequest("Notes cannot exceed 500 characters.");
             }
 
-            // Validate new status when supplied.
             if (!string.IsNullOrWhiteSpace(request.NewStatus))
             {
                 var validStatuses = new[]
@@ -379,7 +371,6 @@ namespace APCVehicleTracker.API.Controllers
                     return BadRequest("Invalid vehicle status.");
                 }
 
-                // Do not mark a vehicle Sold through movement logging.
                 if (request.NewStatus.Trim() == "Sold")
                 {
                     return BadRequest(
@@ -387,7 +378,6 @@ namespace APCVehicleTracker.API.Controllers
                 }
             }
 
-            // Save movement and vehicle changes as one transaction.
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
 
