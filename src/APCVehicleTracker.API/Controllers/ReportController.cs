@@ -1,6 +1,6 @@
 ﻿namespace APCVehicleTracker.API.Controllers;
+
 using APCVehicleTracker.Data;
-using global::APCVehicleTracker.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,8 +9,8 @@ using System.Text;
 
     [ApiController]
     [Route("api/[controller]")]
-    
-    [AllowAnonymous]   // TEMP: remove before handing in
+    [Authorize(Roles = "Admin,Branch Manager")]
+
 public class ReportsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
