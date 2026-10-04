@@ -200,7 +200,8 @@ namespace APCVehicleTracker.Controllers
                 TempData["SuccessMessage"] =
                     "Vehicle movement logged successfully.";
 
-                return RedirectToAction(nameof(Search));
+                // Back to the vehicle that was just moved.
+                return RedirectToAction(nameof(Details), new { id });
             }
 
             var errorMessage =

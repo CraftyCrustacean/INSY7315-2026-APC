@@ -12,10 +12,19 @@
         (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanReactivateVehicles)).Succeeded;
 }
 
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
 <div class="row">
     <div class="col-12 col-lg-5">
         <div class="card shadow-sm mb-3">
-         @if (!string.IsNullOrWhiteSpace(Model.PrimaryImage))
+            @if (!string.IsNullOrWhiteSpace(Model.PrimaryImage))
             {
                 <img src="@Url.Action("Get", "Images", new { blobName = Model.PrimaryImage })"
                      class="card-img-top"
@@ -23,7 +32,7 @@
                      style="max-height:320px; object-fit:cover;" />
             }
             <div class="card-body">
-            @if (!Model.IsActive)
+                @if (!Model.IsActive)
                 {
                     <div class="alert alert-warning py-2">This vehicle is inactive (deleted).</div>
                 }
@@ -33,6 +42,7 @@
                 <p><strong>Current Location:</strong> @Model.CurrentLocation</p>
                 <p><strong>Status:</strong> @Model.Status</p>
 
+                @* Saheel Ramone Bhugwandeen - Feature 3: Log Movement *@
                 @if (Model.IsActive && canLogMovements && Model.Status != "Sold")
                 {
                     <a asp-action="LogMovement" asp-route-id="@Model.Id" class="btn btn-apc">Log New Movement</a>
@@ -49,7 +59,7 @@
                     </form>
                 }
 
-                <a asp-action="Search" class="btn btn-outline-secondary">Back to Search</a>
+                <a asp-controller="Vehicle" asp-action="Index" class="btn btn-outline-secondary">Back to Dashboard</a>
             </div>
         </div>
     </div>

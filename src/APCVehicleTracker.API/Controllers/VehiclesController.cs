@@ -14,7 +14,7 @@ namespace APCVehicleTracker.API.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IAuthorizationService _authorizationService;
 
-        public VehiclesController(ApplicationDbContext context,IAuthorizationService authorizationService)
+        public VehiclesController(ApplicationDbContext context, IAuthorizationService authorizationService)
         {
             _context = context;
             _authorizationService = authorizationService;
@@ -45,7 +45,7 @@ namespace APCVehicleTracker.API.Controllers
                 .AsQueryable();
 
             var showInactive = inactiveOnly && await IsAdminAsync();
-                query = query.Where(v => v.IsActive != showInactive);
+            query = query.Where(v => v.IsActive != showInactive);
 
             if (!includeSold)
                 query = query.Where(v => v.Status != "Sold");
@@ -295,6 +295,12 @@ namespace APCVehicleTracker.API.Controllers
             int id,
             [FromBody] LogMovementRequestDto request)
         {
+            // Only roles allowed to log movements (otherwise 403).
+            if (!(await _authorizationService.AuthorizeAsync(User, AuthPolicies.CanLogMovements)).Succeeded)
+            {
+                return Forbid();
+            }
+
             var vehicle = await _context.Vehicles
                 .FirstOrDefaultAsync(v => v.VehicleId == id);
 
@@ -318,12 +324,9 @@ namespace APCVehicleTracker.API.Controllers
                 .OrderByDescending(m => m.MovementDateTime)
                 .FirstOrDefaultAsync();
 
-            if (latestMovement == null)
-            {
-                return BadRequest("The vehicle does not have a current location.");
-            }
-
-            var fromLocationId = latestMovement.ToLocationId;
+            // A vehicle with no movements yet has no current location. Its first
+            // movement is an initial placement, saved with no "from" location.
+            int? fromLocationId = latestMovement?.ToLocationId;
 
             var destination = await _context.Locations
                 .AsNoTracking()
@@ -334,7 +337,7 @@ namespace APCVehicleTracker.API.Controllers
                 return BadRequest("Destination location does not exist.");
             }
 
-            if (request.ToLocationId == fromLocationId)
+            if (fromLocationId.HasValue && request.ToLocationId == fromLocationId.Value)
             {
                 return BadRequest(
                     "Destination must be different from the current location.");
@@ -457,4 +460,3 @@ namespace APCVehicleTracker.API.Controllers
         }
     }
 }
-
