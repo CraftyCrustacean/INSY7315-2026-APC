@@ -15,5 +15,5 @@ jobs:
         with:
           dotnet-version: '10.0.x'
       - run: dotnet restore
-      - run: dotnet build --no-restore -c Release /p:SixLaborsLicenseKey="${{ secrets.SIXLABORS_LICENSE_KEY }}"
+      - run: dotnet build --no-restore -c Release /p:SixLaborsLicenseKey=${{ secrets.SIXLABORS_LICENSE_KEY }}
       - run: dotnet test --no-build -c Release
