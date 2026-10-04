@@ -116,6 +116,7 @@ namespace APCVehicleTracker.Services
             return new Vehicle
             {
                 PrimaryImage = result.PrimaryImage,
+                IsActive = result.IsActive,
                 Id = result.VehicleId,
                 RegistrationNumber = result.Registration,
                 Make = result.Make,
@@ -224,6 +225,9 @@ namespace APCVehicleTracker.Services
             public int VehicleId { get; set; }
 
             public string? PrimaryImage { get; set; }
+
+            // Defaults to true so a response without the field never hides the action buttons.
+            public bool IsActive { get; set; } = true;
 
             public string Make { get; set; } = string.Empty;
 

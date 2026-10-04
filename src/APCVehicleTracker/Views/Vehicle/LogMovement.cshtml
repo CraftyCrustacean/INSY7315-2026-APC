@@ -12,6 +12,8 @@
         ViewBag.AvailableStatuses
         as List<string>
         ?? new List<string>();
+
+    var hasLocation = !string.IsNullOrWhiteSpace(Model.CurrentLocation);
 }
 
 <h4>Log Movement — @Model.Make @Model.Model (@Model.RegistrationNumber)</h4>
@@ -33,11 +35,13 @@
 
                 <input type="text"
                        class="form-control"
-                       value="@Model.CurrentLocation"
+                       value="@(hasLocation ? Model.CurrentLocation : "No current location (new vehicle)")"
                        readonly />
 
                 <div class="form-text">
-                    This is automatically taken from the vehicle's current location.
+                    @(hasLocation
+                        ? "This is automatically taken from the vehicle's current location."
+                        : "This vehicle has no movements yet. Its first movement sets its starting location.")
                 </div>
             </div>
 
@@ -113,7 +117,8 @@
             </button>
 
             <a asp-controller="Vehicle"
-               asp-action="Search"
+               asp-action="Details"
+               asp-route-id="@Model.Id"
                class="btn btn-outline-secondary">
                 Cancel
             </a>
