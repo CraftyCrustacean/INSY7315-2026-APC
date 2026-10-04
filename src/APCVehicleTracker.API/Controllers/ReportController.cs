@@ -24,7 +24,7 @@ public class ReportsController : ControllerBase
         {
             var raw = await (
                 from v in _context.Vehicles.AsNoTracking()
-                where v.Status != "Sold"
+                where v.Status != "Sold" && v.IsActive
                 let last = _context.Movements
                     .Where(m => m.VehicleId == v.VehicleId)
                     .OrderByDescending(m => m.MovementDateTime)
