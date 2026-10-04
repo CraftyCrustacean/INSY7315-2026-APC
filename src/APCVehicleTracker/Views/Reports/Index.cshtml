@@ -1,0 +1,105 @@
+﻿@model APCVehicleTracker.Models.ReportsViewModel
+@{
+    ViewData["Title"] = "Reports";
+}
+
+<h2 class="mb-4">Reports</h2>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-muted small">TOTAL IN STOCK</div>
+                <div class="display-5">@Model.Summary.TotalInStock</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-muted small">IN WORKSHOP</div>
+                <div class="display-5">@Model.Summary.TotalInWorkshop</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="text-muted small">STUCK VEHICLES (&gt; @Model.Days days)</div>
+                <div class="display-5">@Model.Summary.StuckVehicles</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4>Stuck vehicles</h4>
+<form method="get" class="row g-2 align-items-end mb-3">
+    <div class="col-auto">
+        <label class="form-label" for="locationId">Location</label>
+        <select id="locationId" name="locationId" class="form-select" asp-items="Model.Locations">
+            <option value="">All locations</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <label class="form-label" for="days">More than (days)</label>
+        <input id="days" name="days" type="number" min="0" class="form-control" value="@Model.Days" />
+    </div>
+    <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Apply</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Reset</a>
+        <a asp-action="ExportStuck" asp-route-locationId="@Model.LocationId" asp-route-days="@Model.Days"
+           class="btn btn-outline-success">Export CSV</a>
+    </div>
+</form>
+
+@if (!Model.Stuck.Any())
+{
+    <div class="alert alert-info">No stuck vehicles match these filters.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr><th>Registration</th><th>Vehicle</th><th>Location</th><th>Days</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var v in Model.Stuck)
+            {
+                <tr>
+                    <td>@v.Registration</td>
+                    <td>@v.Make @v.Model</td>
+                    <td>@v.Location</td>
+                    <td>@v.DaysAtLocation</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h4 class="mt-5">Stock aging</h4>
+<a asp-action="ExportStockAging" class="btn btn-outline-success mb-3">Export CSV</a>
+
+@if (!Model.Aging.Any())
+{
+    <div class="alert alert-info">No vehicles in stock.</div>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr><th>Registration</th><th>Vehicle</th><th>Status</th><th>Start date</th><th>Days in stock</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var v in Model.Aging)
+            {
+                <tr>
+                    <td>@v.Registration</td>
+                    <td>@v.Make @v.Model</td>
+                    <td>@v.Status</td>
+                    <td>@(v.StartDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                    <td>@v.DaysInStock</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
