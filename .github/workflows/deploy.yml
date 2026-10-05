@@ -1,0 +1,43 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test
+        run: dotnet test -c Release
+
+      - name: Publish API
+        run: dotnet publish src/APCVehicleTracker.API -c Release -r win-x86 --self-contained true -o publish/api
+
+      - name: Publish web
+        run: dotnet publish src/APCVehicleTracker -c Release -r win-x86 --self-contained true -o publish/web
+
+      - name: Deploy API
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: apcvt-api
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_API }}
+          package: publish/api
+
+      - name: Deploy web
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: apcvt-web
+          publish-profile: ${{ secrets.AZURE_PUBLISH_PROFILE_WEB }}
+          package: publish/web
