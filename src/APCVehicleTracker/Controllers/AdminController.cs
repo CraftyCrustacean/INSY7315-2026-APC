@@ -47,6 +47,8 @@ public class AdminController : Controller
         if (staff is null) return NotFound();
 
         ViewData["Email"] = staff.Email;
+        ViewData["IsActive"] = staff.IsActive;
+        ViewData["IsSelf"] = staff.StaffId.ToString() == User.FindFirst(StaffSigninService.StaffIdClaim)?.Value;
         return View(new UpdateStaffRequest
         {
             FirstName = staff.FirstName,
@@ -81,6 +83,19 @@ public class AdminController : Controller
             return RedirectToAction(nameof(Index));
         }
         return ShowTemporaryPassword(result.Value!);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SetActive(int id, bool active)
+    {
+        var result = await _staff.SetActiveAsync(id, active);
+        if (!result.Ok)
+        {
+            TempData["Error"] = result.Error;
+            return RedirectToAction(nameof(Index));
+        }
+        TempData["Message"] = $"{result.Value!.FirstName} {result.Value.LastName} was {(active ? "reactivated" : "deactivated")}.";
+        return RedirectToAction(nameof(Index));
     }
 
     private IActionResult ShowTemporaryPassword(TemporaryPasswordResponse response)

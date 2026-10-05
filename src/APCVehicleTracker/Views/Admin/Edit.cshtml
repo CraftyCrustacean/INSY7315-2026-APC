@@ -14,7 +14,7 @@
 
         <div class="card shadow-sm">
             <div class="card-body">
-                <form asp-action="Edit" asp-route-id="@ViewContext.RouteData.Values["id"]" method="post">
+                <form asp-action="Edit" asp-route-id="@(ViewContext.RouteData.Values["id"])" method="post">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
                     <div class="row g-3">
@@ -38,7 +38,7 @@
                         <div class="col-12">
                             <label asp-for="Role" class="form-label">Role</label>
                             <select asp-for="Role" class="form-select"
-                                    asp-items="@StaffRoles.All.Select(r => new SelectListItem(StaffRoles.DisplayName(r), r))">
+                                    asp-items="@(StaffRoles.All.Select(r => new SelectListItem(StaffRoles.DisplayName(r), r)))">
                             </select>
                             <span asp-validation-for="Role" class="text-danger small"></span>
                         </div>
@@ -52,6 +52,39 @@
             </div>
         </div>
 
+        @if (ViewData["IsActive"] is bool isActive)
+        {
+            var isSelf = ViewData["IsSelf"] is true;
+            var confirmText = isActive
+                ? "Deactivate this account? The user will lose access to the app."
+                : "Reactivate this account?";
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-body d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3">
+                    <div>
+                        <h2 class="h5 mb-1">Account access</h2>
+                        <p class="text-muted mb-0">
+                            @(isActive ? "This account is active and can sign in." : "This account is deactivated and cannot sign in.")
+                        </p>
+                    </div>
+
+                    @if (isSelf)
+                    {
+                        <span class="text-muted small">You cannot deactivate your own account.</span>
+                    }
+                    else
+                    {
+                        <form asp-action="SetActive" asp-route-id="@(ViewContext.RouteData.Values["id"])" method="post"
+                              onsubmit="return confirm('@confirmText');">
+                            <input type="hidden" name="active" value="@(isActive ? "false" : "true")" />
+                            <button type="submit" class="btn @(isActive ? "btn-outline-danger" : "btn-outline-success")">
+                                @(isActive ? "Deactivate" : "Reactivate")
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+        }
     </div>
 </div>
 

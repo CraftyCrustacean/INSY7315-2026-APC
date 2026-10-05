@@ -45,6 +45,12 @@ public class StaffApiService
         return await ReadResult<TemporaryPasswordResponse>(await _http.PostAsync($"api/staff/{id}/reset-password", null));
     }
 
+    public async Task<ApiResult<StaffDto>> SetActiveAsync(int id, bool active)
+    {
+        var action = active ? "activate" : "deactivate";
+        return await ReadResult<StaffDto>(await _http.PostAsync($"api/staff/{id}/{action}", null));
+    }
+
     private static async Task<ApiResult<T>> ReadResult<T>(HttpResponseMessage response)
     {
         if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.Conflict or HttpStatusCode.NotFound)
