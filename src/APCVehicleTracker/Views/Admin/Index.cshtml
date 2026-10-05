@@ -3,8 +3,15 @@
     ViewData["Title"] = "Staff";
 }
 
+@functions {
+    static (string Text, string Css) Status(StaffDto s) =>
+        !s.IsActive ? ("Inactive", "bg-secondary")
+        : !s.HasSignIn ? ("No sign-in", "bg-warning text-dark")
+        : ("Active", "bg-success");
+}
+
 <h1 class="mb-1">Staff</h1>
-<div class="d-flex justify-content-between align-items-center mb-3">
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
     <p class="text-muted mb-0">View, manage, and create staff members</p>
     <a asp-action="Create" class="btn btn-primary">Add staff member</a>
 </div>
@@ -17,45 +24,59 @@
 {
     <div class="alert alert-danger">@error</div>
 }
+<div class="d-md-none">
+    @foreach (var s in Model)
+    {
+        var status = Status(s);
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                    <h2 class="h6 mb-0">@s.FirstName @s.LastName</h2>
+                    <span class="badge @status.Css">@status.Text</span>
+                </div>
+                <div class="text-muted small text-break">@s.Email</div>
+                <div class="small mb-3">@StaffRoles.DisplayName(s.Role)</div>
 
-<table class="table align-middle">
-    <thead>
-        <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr>
-    </thead>
-    <tbody>
-        @foreach (var s in Model)
-        {
-            <tr>
-                <td>@s.FirstName @s.LastName</td>
-                <td>@s.Email</td>
-                <td>@StaffRoles.DisplayName(s.Role)</td>
-                <td>
-                    @if (!s.IsActive)
-                    {
-                        <span class="badge bg-secondary">Inactive</span>
-                    }
-                    else if (!s.HasSignIn)
-                    {
-
-                        <span class="badge bg-warning text-dark">No sign-in</span>
-                    }
-                    else
-                    {
-
-                        <span class="badge bg-success">Active</span>
-                    }
-                </td>
-                <td class="text-end">
-                    <a asp-action="Edit" asp-route-id="@s.StaffId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                <div class="d-flex gap-2">
+                    <a asp-action="Edit" asp-route-id="@s.StaffId" class="btn btn-outline-secondary flex-fill">Edit</a>
                     @if (s.HasSignIn)
                     {
-                        <form asp-action="ResetPassword" asp-route-id="@s.StaffId" method="post" class="d-inline"
-                              onsubmit="return confirm('Reset this staff member\'s password?');">
-                            <button type="submit" class="btn btn-sm btn-outline-danger">Reset password</button>
+                        <form asp-action="ResetPassword" asp-route-id="@s.StaffId" method="post" class="flex-fill"
+                              onsubmit="return confirm('Reset this staff members password?');">
+                            <button type="submit" class="btn btn-outline-danger w-100">Reset password</button>
                         </form>
                     }
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<div class="d-none d-md-block table-responsive">
+    <table class="table align-middle">
+        <thead>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model)
+            {
+                var status = Status(s);
+                <tr>
+                    <td>@s.FirstName @s.LastName</td>
+                    <td>@s.Email</td>
+                    <td>@StaffRoles.DisplayName(s.Role)</td>
+                    <td><span class="badge @status.Css">@status.Text</span></td>
+                    <td class="text-end text-nowrap">
+                        <a asp-action="Edit" asp-route-id="@s.StaffId" class="btn btn-sm btn-outline-secondary">Edit</a>
+                        @if (s.HasSignIn)
+                        {
+                            <form asp-action="ResetPassword" asp-route-id="@s.StaffId" method="post" class="d-inline"
+                                  onsubmit="return confirm('Reset this staff members password?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Reset password</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

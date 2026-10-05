@@ -97,6 +97,20 @@ public class AdminService
         return new TemporaryPasswordResponse(ToDto(staff), password);
     }
 
+    public async Task<StaffDto> SetActiveAsync(int id, bool isActive, int actingStaffId, CancellationToken cancelationToken = default)
+    {
+        var staff = await _repo.GetAsync(id, cancelationToken) ?? throw NotFound(id);
+
+        if (id == actingStaffId && !isActive)
+            throw new AdminException(StaffAdminErrorType.Validation, "You cannot deactivate your own account.");
+
+        staff.IsActive = isActive;
+        await _repo.SaveChangesAsync(cancelationToken);
+
+        _log.LogInformation("Admin {Actor} set staff member {StaffId} state to {IsActive}", actingStaffId, id, isActive);
+        return ToDto(staff);
+    }
+
     private static void ValidateRole(string role)
     {
         if (!StaffRoles.All.Contains(role))
