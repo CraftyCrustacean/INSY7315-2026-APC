@@ -20,6 +20,12 @@ namespace APCVehicleTracker.Controllers
             return View();
         }
 
+        public IActionResult AccessDenied()
+        {
+            Response.StatusCode = StatusCodes.Status403Forbidden;
+            return View();
+        }
+
         public IActionResult Index()
         {
             return View();

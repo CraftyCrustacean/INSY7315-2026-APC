@@ -47,6 +47,7 @@ public static class AuthSetup
             cookie.SlidingExpiration = true;
             cookie.Cookie.HttpOnly = true;
             cookie.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            cookie.AccessDeniedPath = "/Home/AccessDenied";
         });
 
         return services;
