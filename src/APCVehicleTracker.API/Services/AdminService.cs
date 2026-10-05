@@ -46,13 +46,13 @@ public class AdminService
             IsActive = true
         };
 
+        // If Entra worked but the db didnt for some reason, delete the entra user to keep sync.
         try
         {
             await _repo.AddAsync(staff, cancelationToken);
         }
         catch
         {
-            // If Entra worked but the db didnt for some reason, delete the entra user to keep sync.
             try { await _graph.DeleteUserAsync(objectId, CancellationToken.None); }
             catch (Exception deleteError)
             {
