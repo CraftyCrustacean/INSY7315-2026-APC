@@ -6,6 +6,7 @@ APC Vehicle Tracker is a web application for APC Cars that tracks used-vehicle s
 
 **Live site:** https://apcvt-web-ckbmcze0hhbehwc6.germanywestcentral-01.azurewebsites.net/
 **Repository:** https://github.com/CraftyCrustacean/INSY7315-2026-APC
+**Group Presentation:** https://youtu.be/FJ4KDnzZqvc
 
 ## Team and features
 
