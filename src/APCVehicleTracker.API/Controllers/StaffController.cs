@@ -53,4 +53,17 @@ public class StaffController : ControllerBase
         Response.Headers.CacheControl = "no-store";
         return await _service.ResetPasswordAsync(id, ActingStaffId, cancelationToken);
     }
+
+    [HttpPost("{id:int}/deactivate")]
+    public Task<StaffDto> Deactivate(int id, CancellationToken cancelationToken)
+    {
+        return _service.SetActiveAsync(id, false, ActingStaffId, cancelationToken);
+    }
+
+    [HttpPost("{id:int}/activate")]
+    public Task<StaffDto> Activate(int id, CancellationToken cancelationToken)
+    {
+        return _service.SetActiveAsync(id, true, ActingStaffId, cancelationToken);
+    }
+
 }
