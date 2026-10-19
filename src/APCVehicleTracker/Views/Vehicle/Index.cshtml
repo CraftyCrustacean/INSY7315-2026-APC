@@ -1,60 +1,292 @@
 ﻿@using Microsoft.AspNetCore.Authorization
-@using APCVehicleTracker.Data.Auth
-@model List<APCVehicleTracker.Models.Vehicle>
 @inject IAuthorizationService AuthorizationService
+@model APCVehicleTracker.Models.VehicleSearchViewModel
+
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Vehicles";
+
+    // The API always returns 25 results per page.
+    const int pageSize = 25;
+    var totalPages = (int)Math.Ceiling(Model.TotalCount / (double)pageSize);
+
+    // Year slider bounds. A handle left at either end means "no limit" and isn't sent.
+    const int minYear = 1990;
+    var maxYear = DateTime.Now.Year + 1;
+    var yearFrom = Math.Clamp(Model.YearFrom ?? minYear, minYear, maxYear);
+    var yearTo = Math.Clamp(Model.YearTo ?? maxYear, minYear, maxYear);
+
+    // Keeps the current filters on the Previous/Next links.
+    var routeData = new Dictionary<string, string>();
+    if (!string.IsNullOrWhiteSpace(Model.Make)) routeData["make"] = Model.Make;
+    if (!string.IsNullOrWhiteSpace(Model.Model)) routeData["model"] = Model.Model;
+    if (Model.YearFrom.HasValue) routeData["yearFrom"] = Model.YearFrom.Value.ToString();
+    if (Model.YearTo.HasValue) routeData["yearTo"] = Model.YearTo.Value.ToString();
+    var selectedStatus = Model.Status.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s));
+    if (selectedStatus != null) routeData["status"] = selectedStatus;
+    var selectedLocation = Model.Location.FirstOrDefault(l => l > 0);
+    if (selectedLocation > 0) routeData["location"] = selectedLocation.ToString();
+    if (Model.IncludeSold) routeData["includeSold"] = "true";
+
+    var hasFilters = routeData.Count > 0;
+
     var canEditVehicles =
         (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanEditVehicles)).Succeeded;
+    var canReactivate =
+        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanReactivateVehicles)).Succeeded;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Vehicle Stock Dashboard</h2>
-    @if (canEditVehicles)
+<div class="apc-page apc-page--wide">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Vehicles</h1>
+            <p class="page-lead">Browse, filter, and manage vehicle stock</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            @if (canReactivate)
+            {
+                <a asp-controller="ManageVehicles" asp-action="Inactive" class="btn btn-ghost">Inactive vehicles</a>
+            }
+            @if (canEditVehicles)
+            {
+                <a asp-controller="ManageVehicles" asp-action="Create" class="btn btn-charcoal">Add vehicle</a>
+            }
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
     {
-        <a asp-controller="ManageVehicles" asp-action="Create" class="btn btn-apc">Add Vehicle</a>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
     }
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="vehicles-layout">
+        <aside class="vehicles-filters">
+            <button class="btn btn-ghost w-100 d-lg-none mb-3" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#vehicleFilters"
+                    aria-expanded="false" aria-controls="vehicleFilters">
+                Filters@(hasFilters ? " (active)" : "")
+            </button>
+
+            <div class="collapse d-lg-block" id="vehicleFilters">
+                <form method="get" asp-controller="Vehicle" asp-action="Index" class="apc-panel filter-panel" id="filterForm">
+                    <h2 class="section-label">Filters</h2>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="makeSelect">Make</label>
+                        <select name="make" class="form-select" id="makeSelect">
+                            <option value="">All makes</option>
+                            @foreach (var make in Model.AvailableMakes)
+                            {
+                                <option value="@make" selected="@(Model.Make == make)">@make</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="modelSelect">Model</label>
+                        <select name="model" class="form-select" id="modelSelect">
+                            <option value="">All models</option>
+                            @foreach (var modelName in Model.AvailableModels)
+                            {
+                                <option value="@modelName" selected="@(Model.Model == modelName)">@modelName</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-baseline">
+                            <span class="form-label mb-0" id="yearLabel">Year</span>
+                            <span class="year-range__value" id="yearValue" aria-live="polite"></span>
+                        </div>
+                        <div class="year-range" data-min="@minYear" data-max="@maxYear">
+                            <div class="year-range__track"><div class="year-range__fill"></div></div>
+                            <input type="range" name="yearFrom" min="@minYear" max="@maxYear" step="1" value="@yearFrom"
+                                   aria-label="Year from" />
+                            <input type="range" name="yearTo" min="@minYear" max="@maxYear" step="1" value="@yearTo"
+                                   aria-label="Year to" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="statusSelect">Status</label>
+                        <select name="status" class="form-select" id="statusSelect">
+                            <option value="">All statuses</option>
+                            @foreach (var status in Model.AvailableStatuses)
+                            {
+                                <option value="@status" selected="@(Model.Status.Contains(status))">@status</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="locationSelect">Location</label>
+                        <select name="location" class="form-select" id="locationSelect">
+                            <option value="">All locations</option>
+                            @foreach (var location in Model.AvailableLocations)
+                            {
+                                <option value="@location.LocationId" selected="@(Model.Location.Contains(location.LocationId))">
+                                    @location.LocationName
+                                </option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input type="checkbox" name="includeSold" value="true" class="form-check-input" id="includeSold"
+                               @(Model.IncludeSold ? "checked" : "") />
+                        <label class="form-check-label" for="includeSold">Include sold vehicles</label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-charcoal flex-fill">Apply</button>
+                        <a asp-controller="Vehicle" asp-action="Index" class="btn btn-ghost flex-fill">Clear</a>
+                    </div>
+                </form>
+            </div>
+        </aside>
+
+        <section class="vehicles-results" aria-label="Vehicles">
+            <p class="results-count">
+                <strong>@Model.TotalCount</strong> @(Model.TotalCount == 1 ? "vehicle" : "vehicles")
+                @(hasFilters ? "match your filters" : "in stock")
+            </p>
+
+            @if (!Model.Vehicles.Any())
+            {
+                <div class="apc-panel p-4 text-center text-muted">
+                    No vehicles match these filters.
+                </div>
+            }
+            else
+            {
+                <div class="vehicle-grid">
+                    @foreach (var vehicle in Model.Vehicles)
+                    {
+                        <a asp-controller="Vehicle" asp-action="Details" asp-route-id="@vehicle.VehicleId" class="vehicle-card">
+                            @if (!string.IsNullOrWhiteSpace(vehicle.PrimaryImage))
+                            {
+                                <img src="@Url.Action("Get", "Images", new { blobName = vehicle.PrimaryImage, thumb = true })"
+                                     class="vehicle-card__img" alt="@vehicle.Make @vehicle.Model" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="vehicle-card__img vehicle-card__img--empty">No image</div>
+                            }
+
+                            <div class="vehicle-card__body">
+                                <div class="d-flex justify-content-between align-items-start gap-2">
+                                    <div class="min-w-0">
+                                        <h2 class="vehicle-card__title">@vehicle.Make @vehicle.Model</h2>
+                                        <div class="vehicle-card__year">@vehicle.Year</div>
+                                    </div>
+                                    <span class="status-pill @VehicleStatusStyles.PillCss(vehicle.Status)">@vehicle.Status</span>
+                                </div>
+
+                                <dl class="vehicle-card__meta">
+                                    <div><dt>Reg</dt><dd>@vehicle.Registration</dd></div>
+                                    <div><dt>Location</dt><dd>@(vehicle.CurrentLocation ?? "Unknown")</dd></div>
+                                    <div>
+                                        <dt>At location</dt>
+                                        <dd>@(vehicle.DaysAtCurrentLocation is int days ? $"{days} {(days == 1 ? "day" : "days")}" : "N/A")</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </a>
+                    }
+                </div>
+
+                @if (totalPages > 1)
+                {
+                    <nav class="results-pager" aria-label="Vehicle results pages">
+                        @if (Model.Page > 1)
+                        {
+                            <a class="btn btn-ghost" asp-controller="Vehicle" asp-action="Index"
+                               asp-all-route-data="routeData" asp-route-page="@(Model.Page - 1)">Previous</a>
+                        }
+                        else
+                        {
+                            <span class="btn btn-ghost disabled" aria-disabled="true">Previous</span>
+                        }
+
+                        <span class="text-muted small">Page @Model.Page of @totalPages</span>
+
+                        @if (Model.Page < totalPages)
+                        {
+                            <a class="btn btn-ghost" asp-controller="Vehicle" asp-action="Index"
+                               asp-all-route-data="routeData" asp-route-page="@(Model.Page + 1)">Next</a>
+                        }
+                        else
+                        {
+                            <span class="btn btn-ghost disabled" aria-disabled="true">Next</span>
+                        }
+                    </nav>
+                }
+            }
+        </section>
+    </div>
 </div>
 
-@if (Model == null || !Model.Any())
-{
-    <p class="text-muted">No vehicles found.</p>
-}
-else
-{
-    <div class="row g-3">
-        @foreach (var v in Model)
-        {
-            var statusClass = v.Status == "Available" ? "status-instock" :
-                              v.Status == "In Workshop" ? "status-workshop" : "status-other";
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById('filterForm');
 
-            <div class="col-12 col-md-6 col-lg-4">
-                <div class="card card-vehicle shadow-sm h-100">
-                    @if (!string.IsNullOrWhiteSpace(v.PrimaryImage))
-                    {
-                        <img src="@Url.Action("Get", "Images", new { blobName = v.PrimaryImage, thumb = true })"
-                             class="card-img-top" alt="@v.Make @v.Model" loading="lazy"
-                             style="height:160px; object-fit:cover;" />
-                    }
-                    else
-                    {
-                        <div class="card-img-top bg-light text-muted d-flex align-items-center justify-content-center"
-                             style="height:160px;">No image</div>
-                    }
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <h5 class="card-title">@v.Make @v.Model</h5>
-                            <span class="badge badge-status @statusClass">@v.Status</span>
-                        </div>
-                        <p class="card-text mb-1"><strong>Reg:</strong> @v.RegistrationNumber</p>
-                        <p class="card-text mb-1"><strong>Location:</strong> @(string.IsNullOrWhiteSpace(v.CurrentLocation) ? "Unknown" : v.CurrentLocation)</p>
-                        <p class="card-text text-muted small">
-                            Last moved: @(v.LastMoved == DateTime.MinValue ? "Not yet moved" : v.LastMoved.ToString("dd MMM yyyy"))
-                        </p>
-                        <a asp-action="Details" asp-route-id="@v.Id" class="btn btn-apc btn-sm mt-2">View Details</a>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
+            // Reload when the make changes so the Model dropdown shows that make's models.
+            document.getElementById('makeSelect').addEventListener('change', function () {
+                document.getElementById('modelSelect').value = '';
+                form.requestSubmit();
+            });
+
+            // Dual-handle year slider
+            const range = form.querySelector('.year-range');
+            const min = Number(range.dataset.min);
+            const max = Number(range.dataset.max);
+            const [from, to] = range.querySelectorAll('input[type=range]');
+            const fill = range.querySelector('.year-range__fill');
+            const output = document.getElementById('yearValue');
+
+            function update(moved) {
+                // Stop the handles crossing over
+                if (Number(from.value) > Number(to.value)) {
+                    if (moved === from) from.value = to.value; else to.value = from.value;
+                }
+                const a = Number(from.value), b = Number(to.value);
+                fill.style.left = ((a - min) / (max - min) * 100) + '%';
+                fill.style.right = (100 - (b - min) / (max - min) * 100) + '%';
+
+                // Whichever handle sits at its end of the track gets the higher z-index,
+                // so the two can still be pulled apart when they meet.
+                from.style.zIndex = a >= max - (max - min) / 2 ? 3 : 2;
+
+                const lo = a <= min ? 'Any' : a;
+                const hi = b >= max ? 'Any' : b;
+                output.textContent = lo === 'Any' && hi === 'Any' ? 'All years'
+                    : a === b ? String(a)
+                    : `${lo} – ${hi}`;
+                from.setAttribute('aria-valuetext', a <= min ? 'Any' : String(a));
+                to.setAttribute('aria-valuetext', b >= max ? 'Any' : String(b));
+            }
+
+            from.addEventListener('input', () => update(from));
+            to.addEventListener('input', () => update(to));
+            update();
+
+            // Handles left at the ends mean "no limit", so leave them out of the URL.
+            form.addEventListener('submit', () => {
+                if (Number(from.value) <= min) from.disabled = true;
+                if (Number(to.value) >= max) to.disabled = true;
+            });
+            // Re-enable if the page is restored from the back/forward cache
+            window.addEventListener('pageshow', () => { from.disabled = false; to.disabled = false; });
+        })();
+    </script>
 }

@@ -39,6 +39,29 @@ public static class AuthSetup
                     vld.ProtocolMessage.Prompt = "login";
                 };
             };
+
+            // Tell Entra which account is signing out so it can skip the "pick an account" page.
+            // Needs the login_hint optional claim on the ID token (App registration > Token configuration).
+            var existingSignOut = options.Events.OnRedirectToIdentityProviderForSignOut;
+            options.Events.OnRedirectToIdentityProviderForSignOut = async ctx =>
+            {
+                await existingSignOut(ctx);
+                var loginHint = ctx.HttpContext.User.FindFirst("login_hint")?.Value;
+                if (!string.IsNullOrEmpty(loginHint))
+                {
+                    ctx.ProtocolMessage.SetParameter("logout_hint", loginHint);
+                }
+            };
+
+            // After Entra signs the user out, go to the home page instead of the "Signed out" page.
+            // Every page needs sign-in, so this lands straight on the Entra sign-in screen.
+            var existingSignedOut = options.Events.OnSignedOutCallbackRedirect;
+            options.Events.OnSignedOutCallbackRedirect = async ctx =>
+            {
+                await existingSignedOut(ctx);
+                ctx.Response.Redirect(ctx.Request.PathBase + "/");
+                ctx.HandleResponse();
+            };
         });
 
         services.Configure<CookieAuthenticationOptions>(CookieAuthenticationDefaults.AuthenticationScheme, cookie =>
