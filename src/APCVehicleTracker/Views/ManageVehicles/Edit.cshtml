@@ -7,11 +7,17 @@
 
 @if (TempData["SuccessMessage"] is string ok)
 {
-    <div class="alert alert-success">@ok</div>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @ok
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
 @if (TempData["ErrorMessage"] is string bad)
 {
-    <div class="alert alert-danger">@bad</div>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @bad
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -80,7 +86,8 @@
                         </form>
 
                         <form asp-action="DeleteImage" asp-route-id="@Model.VehicleId" method="post"
-                              onsubmit="return confirm('Delete this image permanently?');">
+                              data-confirm="This image will be permanently deleted from the vehicle. This can't be undone."
+                              data-confirm-title="Delete image?" data-confirm-button="Delete image" data-confirm-variant="danger">
                             <input type="hidden" name="imageId" value="@image.ImageId" />
                             <button class="btn btn-sm btn-outline-danger">Delete</button>
                         </form>

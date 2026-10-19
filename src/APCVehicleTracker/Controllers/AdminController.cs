@@ -92,10 +92,10 @@ public class AdminController : Controller
         if (!result.Ok)
         {
             TempData["Error"] = result.Error;
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Edit), new { id });
         }
         TempData["Message"] = $"{result.Value!.FirstName} {result.Value.LastName} was {(active ? "reactivated" : "deactivated")}.";
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(Edit), new { id });
     }
 
     private IActionResult ShowTemporaryPassword(TemporaryPasswordResponse response)
