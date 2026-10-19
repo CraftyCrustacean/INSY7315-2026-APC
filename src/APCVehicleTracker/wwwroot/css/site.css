@@ -616,6 +616,13 @@ body.home-bg {
   font-weight: 600;
 }
 
+.vehicle-card__model {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4a4e55;
+}
+
 .vehicle-card__year {
   font-size: 0.875rem;
   color: #6b6f76;

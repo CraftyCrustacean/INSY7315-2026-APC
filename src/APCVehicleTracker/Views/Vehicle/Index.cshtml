@@ -5,17 +5,14 @@
 @{
     ViewData["Title"] = "Vehicles";
 
-    // The API always returns 25 results per page.
     const int pageSize = 25;
     var totalPages = (int)Math.Ceiling(Model.TotalCount / (double)pageSize);
 
-    // Year slider bounds. A handle left at either end means "no limit" and isn't sent.
     const int minYear = 1990;
     var maxYear = DateTime.Now.Year + 1;
     var yearFrom = Math.Clamp(Model.YearFrom ?? minYear, minYear, maxYear);
     var yearTo = Math.Clamp(Model.YearTo ?? maxYear, minYear, maxYear);
 
-    // Keeps the current filters on the Previous/Next links.
     var routeData = new Dictionary<string, string>();
     if (!string.IsNullOrWhiteSpace(Model.Make)) routeData["make"] = Model.Make;
     if (!string.IsNullOrWhiteSpace(Model.Model)) routeData["model"] = Model.Model;
@@ -185,7 +182,10 @@
                             <div class="vehicle-card__body">
                                 <div class="d-flex justify-content-between align-items-start gap-2">
                                     <div class="min-w-0">
-                                        <h2 class="vehicle-card__title">@vehicle.Make @vehicle.Model</h2>
+                                        <h2 class="vehicle-card__title">
+                                            @vehicle.Make
+                                            <span class="vehicle-card__model">@vehicle.Model</span>
+                                        </h2>
                                         <div class="vehicle-card__year">@vehicle.Year</div>
                                     </div>
                                     <span class="status-pill @VehicleStatusStyles.PillCss(vehicle.Status)">@vehicle.Status</span>
@@ -240,13 +240,11 @@
         (() => {
             const form = document.getElementById('filterForm');
 
-            // Reload when the make changes so the Model dropdown shows that make's models.
             document.getElementById('makeSelect').addEventListener('change', function () {
                 document.getElementById('modelSelect').value = '';
                 form.requestSubmit();
             });
 
-            // Dual-handle year slider
             const range = form.querySelector('.year-range');
             const min = Number(range.dataset.min);
             const max = Number(range.dataset.max);
@@ -255,7 +253,6 @@
             const output = document.getElementById('yearValue');
 
             function update(moved) {
-                // Stop the handles crossing over
                 if (Number(from.value) > Number(to.value)) {
                     if (moved === from) from.value = to.value; else to.value = from.value;
                 }
@@ -263,8 +260,6 @@
                 fill.style.left = ((a - min) / (max - min) * 100) + '%';
                 fill.style.right = (100 - (b - min) / (max - min) * 100) + '%';
 
-                // Whichever handle sits at its end of the track gets the higher z-index,
-                // so the two can still be pulled apart when they meet.
                 from.style.zIndex = a >= max - (max - min) / 2 ? 3 : 2;
 
                 const lo = a <= min ? 'Any' : a;
@@ -280,12 +275,10 @@
             to.addEventListener('input', () => update(to));
             update();
 
-            // Handles left at the ends mean "no limit", so leave them out of the URL.
             form.addEventListener('submit', () => {
                 if (Number(from.value) <= min) from.disabled = true;
                 if (Number(to.value) >= max) to.disabled = true;
             });
-            // Re-enable if the page is restored from the back/forward cache
             window.addEventListener('pageshow', () => { from.disabled = false; to.disabled = false; });
         })();
     </script>
