@@ -3,22 +3,20 @@
     ViewData["Title"] = "Error";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-6">
-        <div class="card shadow-sm border-danger">
-            <div class="card-body text-center py-5">
-                <h1 class="h3 text-danger mb-3">Something went wrong</h1>
-                <p class="mb-4">An error occurred while processing your request. Please try again, or contact an administrator if it keeps happening.</p>
+<div class="apc-page apc-page--narrow">
+    <div class="apc-panel p-5 text-center">
+        <h1 class="page-title">Something went wrong</h1>
+        <p class="page-lead mb-4">
+            An error occurred while processing your request. Please try again, or contact an administrator if it keeps happening.
+        </p>
 
-                @if (Model.ShowRequestId)
-                {
-                    <p class="text-muted small">
-                        Request ID: <code>@Model.RequestId</code>
-                    </p>
-                }
+        @if (Model.ShowRequestId)
+        {
+            <p class="text-muted small">
+                Request ID: <code>@Model.RequestId</code>
+            </p>
+        }
 
-                <a asp-controller="Vehicle" asp-action="Index" class="btn btn-apc">Back to dashboard</a>
-            </div>
-        </div>
+        <a asp-controller="Vehicle" asp-action="Index" class="btn btn-charcoal">Back to vehicles</a>
     </div>
 </div>

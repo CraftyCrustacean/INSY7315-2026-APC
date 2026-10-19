@@ -33,7 +33,7 @@ namespace APCVehicleTracker.API.Services
     {
         public const long MaxFileBytes = 5 * 1024 * 1024;
         public const int MaxDimension = 1280;
-        public const int ThumbnailDimension = 300;
+        public const int ThumbnailDimension = 600;
         private const long MaxPixels = 50_000_000; // decompression-bomb guard
 
         private static readonly byte[] PngSignature = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
@@ -103,7 +103,7 @@ namespace APCVehicleTracker.API.Services
                 image.Metadata.XmpProfile = null;
                 image.Metadata.IptcProfile = null;
 
-                // 4. Full-size (max 1280px) and thumbnail (max 300px). Never upscale.
+                // 4. Full-size (max 1280px) and thumbnail (max 600px). Never upscale.
                 FitWithin(image, MaxDimension);
                 using var thumb = image.Clone(_ => { });
                 FitWithin(thumb, ThumbnailDimension);

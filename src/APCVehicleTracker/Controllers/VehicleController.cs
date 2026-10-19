@@ -15,14 +15,6 @@ namespace APCVehicleTracker.Controllers
             _vehicleApiService = vehicleApiService;
         }
 
-        // NEW: Dashboard
-        public async Task<IActionResult> Index()
-        {
-            var vehicles = await _vehicleApiService.GetAllVehiclesAsync();
-
-            return View(vehicles);
-        }
-
         // NEW: Vehicle details + movement history
         public async Task<IActionResult> Details(int id)
         {
@@ -39,15 +31,14 @@ namespace APCVehicleTracker.Controllers
             return View(vehicle);
         }
 
-        // NEW: Stock reports
-        public async Task<IActionResult> Reports()
+        // Search used to be its own page; it now lives on Index. Keeps old links working.
+        public IActionResult Search()
         {
-            var vehicles = await _vehicleApiService.GetAllVehiclesAsync();
-
-            return View(vehicles);
+            return Redirect(Url.Action(nameof(Index)) + Request.QueryString);
         }
 
-        public async Task<IActionResult> Search(
+        // Vehicle stock list with filters
+        public async Task<IActionResult> Index(
             string? make = null,
             string? model = null,
             int? yearFrom = null,

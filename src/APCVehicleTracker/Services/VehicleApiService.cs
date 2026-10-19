@@ -147,35 +147,6 @@ namespace APCVehicleTracker.Services
                 request);
         }
 
-        public async Task<List<Vehicle>> GetAllVehiclesAsync(bool includeSold = false)
-        {
-            var vehicles = new List<Vehicle>();
-            var page = 1;
-
-            while (true)
-            {
-                var url = $"api/vehicles?page={page}";
-
-                if (includeSold)
-                    url += "&includeSold=true";
-
-                var response = await _httpClient
-                    .GetFromJsonAsync<VehicleListApiResponse>(url);
-
-                if (response == null || response.Vehicles.Count == 0)
-                    break;
-
-                vehicles.AddRange(response.Vehicles.Select(MapToVehicle));
-
-                if (vehicles.Count >= response.TotalCount)
-                    break;
-
-                page++;
-            }
-
-            return vehicles;
-        }
-
         public async Task<List<MovementRecord>> GetMovementHistoryAsync(int vehicleId)
         {
             var response = await _httpClient.GetAsync(

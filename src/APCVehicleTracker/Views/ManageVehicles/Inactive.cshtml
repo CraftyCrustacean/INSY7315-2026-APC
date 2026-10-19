@@ -3,50 +3,83 @@
     ViewData["Title"] = "Inactive vehicles";
 }
 
-@if (TempData["SuccessMessage"] is string ok)
-{
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-        @ok
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="apc-page">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Inactive vehicles</h1>
+            <p class="page-lead">Deleted vehicles can be reactivated to return them to stock</p>
+        </div>
+        <a asp-controller="Vehicle" asp-action="Index" class="btn btn-charcoal">Back</a>
     </div>
-}
-@if (TempData["ErrorMessage"] is string bad)
-{
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        @bad
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
-}
 
-<h1 class="h3 mb-3">Inactive vehicles</h1>
+    @if (TempData["SuccessMessage"] is string ok)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @ok
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] is string bad)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @bad
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-@if (!Model.Any())
-{
-    <p class="text-muted">There are no inactive vehicles.</p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table align-middle">
-            <thead>
-                <tr><th>Registration</th><th>Vehicle</th><th>Status</th><th>Last location</th><th></th></tr>
-            </thead>
-            <tbody>
+    @if (!Model.Any())
+    {
+        <div class="apc-panel p-4 text-center text-muted">There are no inactive vehicles.</div>
+    }
+    else
+    {
+        <div class="d-md-none">
             @foreach (var v in Model)
             {
-                <tr>
-                    <td>@v.RegistrationNumber</td>
-                    <td>@v.Year @v.Make @v.Model</td>
-                    <td>@v.Status</td>
-                    <td>@v.CurrentLocation</td>
-                    <td class="text-end">
-                        <form asp-action="Reactivate" asp-route-id="@v.Id" method="post">
-                            <button class="btn btn-sm btn-success">Reactivate</button>
+                <div class="apc-panel p-3 mb-3">
+                    <div class="d-flex align-items-start gap-3 mb-2">
+                        <div class="flex-grow-1 min-w-0">
+                            <h2 class="h6 mb-0">@v.Year @v.Make @v.Model</h2>
+                            <div class="text-muted small">@v.RegistrationNumber</div>
+                        </div>
+                        <span class="status-pill @VehicleStatusStyles.PillCss(v.Status)">@v.Status</span>
+                    </div>
+                    <div class="small text-muted mb-3">Last location: @(string.IsNullOrWhiteSpace(v.CurrentLocation) ? "Unknown" : v.CurrentLocation)</div>
+                    <div class="d-flex gap-2">
+                        <a asp-controller="Vehicle" asp-action="Details" asp-route-id="@v.Id" class="btn btn-ghost flex-fill">View</a>
+                        <form asp-action="Reactivate" asp-route-id="@v.Id" method="post" class="flex-fill">
+                            <button type="submit" class="btn btn-charcoal w-100" data-busy-text="Reactivating…">Reactivate</button>
                         </form>
-                    </td>
-                </tr>
+                    </div>
+                </div>
             }
-            </tbody>
-        </table>
-    </div>
-}
+        </div>
+
+        <div class="d-none d-md-block apc-panel">
+            <div class="table-responsive">
+                <table class="table apc-table table-hover align-middle">
+                    <thead>
+                        <tr><th>Vehicle</th><th>Registration</th><th>Status</th><th>Last location</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in Model)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@v.Year @v.Make @v.Model</td>
+                                <td class="text-muted">@v.RegistrationNumber</td>
+                                <td><span class="status-pill @VehicleStatusStyles.PillCss(v.Status)">@v.Status</span></td>
+                                <td>@(string.IsNullOrWhiteSpace(v.CurrentLocation) ? "Unknown" : v.CurrentLocation)</td>
+                                <td class="text-end text-nowrap">
+                                    <a asp-controller="Vehicle" asp-action="Details" asp-route-id="@v.Id" class="btn btn-sm btn-ghost">View</a>
+                                    <form asp-action="Reactivate" asp-route-id="@v.Id" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-charcoal" data-busy-text="Reactivating…">Reactivate</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

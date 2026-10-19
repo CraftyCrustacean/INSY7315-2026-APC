@@ -103,7 +103,7 @@ namespace APCVehicleTracker.Controllers
             else
                 TempData["ErrorMessage"] = result.Error;
 
-            return RedirectToAction("Search", "Vehicle");
+            return RedirectToAction("Index", "Vehicle");
         }
 
         [Authorize(Policy = AuthPolicies.CanReactivateVehicles)]

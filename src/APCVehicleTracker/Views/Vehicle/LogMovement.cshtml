@@ -1,7 +1,7 @@
 ﻿@model APCVehicleTracker.Models.Vehicle
 
 @{
-    ViewData["Title"] = "Log Movement";
+    ViewData["Title"] = "Log movement";
 
     var destinationLocations =
         ViewBag.DestinationLocations
@@ -16,112 +16,65 @@
     var hasLocation = !string.IsNullOrWhiteSpace(Model.CurrentLocation);
 }
 
-<h4>Log Movement — @Model.Make @Model.Model (@Model.RegistrationNumber)</h4>
+<div class="apc-page apc-page--narrow">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Log movement</h1>
+            <p class="page-lead">@Model.Year @Model.Make @Model.Model &middot; @Model.RegistrationNumber</p>
+        </div>
+    </div>
 
-<div class="card shadow-sm mt-3" style="max-width:600px;">
-    <div class="card-body">
+    <div class="apc-panel p-4">
+        <form asp-controller="Vehicle" asp-action="LogMovement" asp-route-id="@Model.Id" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
-        <form asp-controller="Vehicle"
-              asp-action="LogMovement"
-              asp-route-id="@Model.Id"
-              method="post">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label" for="fromLocation">From location</label>
+                    <input type="text" id="fromLocation" class="form-control"
+                           value="@(hasLocation ? Model.CurrentLocation : "No current location (new vehicle)")" readonly />
+                    <div class="form-text">
+                        @(hasLocation
+                            ? "Taken from the vehicle's current location."
+                            : "This vehicle has no movements yet. Its first movement sets its starting location.")
+                    </div>
+                </div>
 
-            <div asp-validation-summary="ModelOnly"
-                 class="text-danger mb-3">
-            </div>
+                <div class="col-md-6">
+                    <label for="toLocationId" class="form-label">To location</label>
+                    <select id="toLocationId" name="toLocationId" class="form-select" required>
+                        <option value="">Select a destination…</option>
+                        @foreach (var location in destinationLocations)
+                        {
+                            <option value="@location.LocationId">@location.LocationName</option>
+                        }
+                    </select>
+                    @Html.ValidationMessage("toLocationId", new { @class = "text-danger small" })
+                </div>
 
-            <div class="mb-3">
-                <label class="form-label">From Location</label>
+                <div class="col-12">
+                    <label for="newStatus" class="form-label">New status</label>
+                    <select id="newStatus" name="newStatus" class="form-select">
+                        <option value="">Keep current status (@Model.Status)</option>
+                        @foreach (var status in availableStatuses)
+                        {
+                            <option value="@status">@status</option>
+                        }
+                    </select>
+                </div>
 
-                <input type="text"
-                       class="form-control"
-                       value="@(hasLocation ? Model.CurrentLocation : "No current location (new vehicle)")"
-                       readonly />
-
-                <div class="form-text">
-                    @(hasLocation
-                        ? "This is automatically taken from the vehicle's current location."
-                        : "This vehicle has no movements yet. Its first movement sets its starting location.")
+                <div class="col-12">
+                    <label for="notes" class="form-label">Notes <span class="text-muted">(optional)</span></label>
+                    <textarea id="notes" name="notes" class="form-control" rows="3" maxlength="500"></textarea>
+                    <div class="form-text">Maximum 500 characters.</div>
+                    @Html.ValidationMessage("notes", new { @class = "text-danger small" })
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label for="toLocationId" class="form-label">
-                    To Location
-                </label>
-
-                <select id="toLocationId"
-                        name="toLocationId"
-                        class="form-select"
-                        required>
-
-                    <option value="">
-                        Select destination
-                    </option>
-
-                    @foreach (var location in destinationLocations)
-                    {
-                        <option value="@location.LocationId">
-                            @location.LocationName
-                        </option>
-                    }
-                </select>
-
-                @Html.ValidationMessage("toLocationId", new { @class = "text-danger" })
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a asp-controller="Vehicle" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-charcoal" data-busy-text="Saving…">Save movement</button>
             </div>
-
-            <div class="mb-3">
-                <label for="newStatus" class="form-label">
-                    New Status
-                </label>
-
-                <select id="newStatus"
-                        name="newStatus"
-                        class="form-select">
-
-                    <option value="">
-                        Keep current status (@Model.Status)
-                    </option>
-
-                    @foreach (var status in availableStatuses)
-                    {
-                        <option value="@status">
-                            @status
-                        </option>
-                    }
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="notes" class="form-label">
-                    Notes
-                </label>
-
-                <textarea id="notes"
-                          name="notes"
-                          class="form-control"
-                          rows="3"
-                          maxlength="500"
-                          placeholder="Optional notes"></textarea>
-
-                <div class="form-text">
-                    Maximum 500 characters.
-                </div>
-
-                @Html.ValidationMessage("notes", new { @class = "text-danger" })
-            </div>
-
-            <button type="submit"
-                    class="btn btn-apc">
-                Save Movement
-            </button>
-
-            <a asp-controller="Vehicle"
-               asp-action="Details"
-               asp-route-id="@Model.Id"
-               class="btn btn-outline-secondary">
-                Cancel
-            </a>
         </form>
     </div>
 </div>

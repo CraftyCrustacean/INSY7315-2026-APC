@@ -3,43 +3,54 @@
     ViewData["Title"] = "Add vehicle";
 }
 
-<h1 class="h3 mb-3">Add vehicle</h1>
-
-<form asp-action="Create" method="post">
-    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-    <partial name="_VehicleFields" model="Model" />
-
-    <hr class="my-4" />
-
-    <h2 class="h5">Starting location</h2>
-    <p class="text-muted small">Saved as the vehicle's first movement. After this, location can only be changed by logging a movement.</p>
-
-    <div class="row g-3">
-        <div class="col-md-6">
-            <label asp-for="StartingLocationId" class="form-label"></label>
-            <select asp-for="StartingLocationId" class="form-select">
-                <option value="0">-- Select location --</option>
-                @foreach (var location in Model.AvailableLocations)
-                {
-                    <option value="@location.LocationId" selected="@(location.LocationId == Model.StartingLocationId)">@location.LocationName</option>
-                }
-            </select>
-            <span asp-validation-for="StartingLocationId" class="text-danger"></span>
-        </div>
-        <div class="col-md-6">
-            <label asp-for="Notes" class="form-label"></label>
-            <input asp-for="Notes" class="form-control" maxlength="500" />
-            <span asp-validation-for="Notes" class="text-danger"></span>
+<div class="apc-page apc-page--narrow">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Add vehicle</h1>
+            <p class="page-lead">Enter the vehicle's details and where it's starting from</p>
         </div>
     </div>
 
-    <div class="mt-4">
-        <button type="submit" class="btn btn-primary">Add vehicle</button>
-        <a asp-controller="Vehicle" asp-action="Search" class="btn btn-outline-secondary">Cancel</a>
+    <div class="apc-panel p-4">
+        <form asp-action="Create" method="post">
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+            <h2 class="section-label">Vehicle details</h2>
+            <partial name="_VehicleFields" model="Model" />
+
+            <hr class="my-4" />
+
+            <h2 class="section-label mb-1">Starting location</h2>
+            <p class="text-muted small mb-3">Saved as the vehicle's first movement. After this, location can only be changed by logging a movement.</p>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="StartingLocationId" class="form-label"></label>
+                    <select asp-for="StartingLocationId" class="form-select">
+                        <option value="0">Select a location…</option>
+                        @foreach (var location in Model.AvailableLocations)
+                        {
+                            <option value="@location.LocationId" selected="@(location.LocationId == Model.StartingLocationId)">@location.LocationName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="StartingLocationId" class="text-danger small"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <input asp-for="Notes" class="form-control" maxlength="500" />
+                    <span asp-validation-for="Notes" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <p class="text-muted small mt-4 mb-0">You can upload images after the vehicle has been added.</p>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a asp-controller="Vehicle" asp-action="Index" class="btn btn-ghost">Cancel</a>
+                <button type="submit" class="btn btn-charcoal" data-busy-text="Adding…">Add vehicle</button>
+            </div>
+        </form>
     </div>
-    <p class="text-muted small mt-3">You can upload images after the vehicle has been added.</p>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
