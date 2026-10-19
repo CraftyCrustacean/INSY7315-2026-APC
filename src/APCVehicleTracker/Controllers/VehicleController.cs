@@ -15,12 +15,11 @@ namespace APCVehicleTracker.Controllers
             _vehicleApiService = vehicleApiService;
         }
 
-        // NEW: Dashboard
-        public async Task<IActionResult> Index()
+        // The dashboard and search are now one Vehicles page (Search).
+        // Index stays so old links and the logo keep working.
+        public IActionResult Index()
         {
-            var vehicles = await _vehicleApiService.GetAllVehiclesAsync();
-
-            return View(vehicles);
+            return RedirectToAction(nameof(Search));
         }
 
         // NEW: Vehicle details + movement history

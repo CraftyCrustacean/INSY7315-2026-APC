@@ -3,11 +3,18 @@
 @model APCVehicleTracker.Models.VehicleSearchViewModel
 
 @{
-    ViewData["Title"] = "Vehicle Search";
+    ViewData["Title"] = "Vehicles";
 
     // The API always returns 25 results per page.
     const int pageSize = 25;
     var totalPages = (int)Math.Ceiling(Model.TotalCount / (double)pageSize);
+
+    // Year slider bounds. A handle left at its end means "no year filter".
+    const int minYear = 1990;
+    var maxYear = DateTime.Now.Year;
+    var sliderFrom = Math.Clamp(Model.YearFrom ?? minYear, minYear, maxYear);
+    var sliderTo = Math.Clamp(Model.YearTo ?? maxYear, minYear, maxYear);
+    if (sliderFrom > sliderTo) sliderFrom = sliderTo;
 
     // Keeps the current filters on the Previous/Next links.
     var routeData = new Dictionary<string, string>();
@@ -23,239 +30,277 @@
 
     var canEditVehicles =
         (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanEditVehicles)).Succeeded;
-    var canReactivate =
-        (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanReactivateVehicles)).Succeeded;
 }
 
-<div class="container mt-4">
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h2 mb-0">Vehicles</h1>
 
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="mb-0">Vehicle Search</h1>
-
-        <div class="d-flex gap-2">
-            @if (canEditVehicles)
-            {
-                <a asp-controller="ManageVehicles" asp-action="Create" class="btn btn-apc">Add Vehicle</a>
-            }
-            @if (canReactivate)
-            {
-                <a asp-controller="ManageVehicles" asp-action="Inactive" class="btn btn-outline-secondary">Inactive Vehicles</a>
-            }
-        </div>
-    </div>
-
-    @if (TempData["SuccessMessage"] is string successMessage)
+    @if (canEditVehicles)
     {
-        <div class="alert alert-success">@successMessage</div>
+        <a asp-controller="ManageVehicles" asp-action="Create" class="btn btn-charcoal">Add Vehicle</a>
     }
-    @if (TempData["ErrorMessage"] is string errorMessage)
-    {
-        <div class="alert alert-danger">@errorMessage</div>
-    }
+</div>
 
-    <form method="get" asp-controller="Vehicle" asp-action="Search">
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success">@successMessage</div>
+}
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
 
-        <div class="row g-3">
+<div class="row g-4">
 
-            <div class="col-md-3">
-                <label class="form-label">Make</label>
-                <select name="make" class="form-select" id="makeSelect">
-                    <option value="">All Makes</option>
+    <aside class="col-lg-3">
+        <form method="get" asp-controller="Vehicle" asp-action="Search" id="filterForm">
+            <div class="card shadow-sm filter-card">
+                <div class="card-body">
+                    <h2 class="h5 mb-3">Filters</h2>
 
-                    @foreach (var make in Model.AvailableMakes)
-                    {
-                        <option value="@make" selected="@(Model.Make == make)">
-                            @make
-                        </option>
-                    }
-                </select>
-            </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="makeSelect">Make</label>
+                        <select name="make" class="form-select" id="makeSelect">
+                            <option value="">All Makes</option>
 
-            <div class="col-md-3">
-                <label class="form-label">Model</label>
-                <select name="model" class="form-select" id="modelSelect">
-                    <option value="">All Models</option>
+                            @foreach (var make in Model.AvailableMakes)
+                            {
+                                <option value="@make" selected="@(Model.Make == make)">
+                                    @make
+                                </option>
+                            }
+                        </select>
+                    </div>
 
-                    @foreach (var modelName in Model.AvailableModels)
-                    {
-                        <option value="@modelName" selected="@(Model.Model == modelName)">
-                            @modelName
-                        </option>
-                    }
-                </select>
-            </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="modelSelect">Model</label>
+                        <select name="model" class="form-select" id="modelSelect">
+                            <option value="">All Models</option>
 
-            <div class="col-md-2">
-                <label class="form-label">Year From</label>
-                <input type="number"
-                       name="yearFrom"
-                       value="@Model.YearFrom"
-                       class="form-control" />
-            </div>
+                            @foreach (var modelName in Model.AvailableModels)
+                            {
+                                <option value="@modelName" selected="@(Model.Model == modelName)">
+                                    @modelName
+                                </option>
+                            }
+                        </select>
+                    </div>
 
-            <div class="col-md-2">
-                <label class="form-label">Year To</label>
-                <input type="number"
-                       name="yearTo"
-                       value="@Model.YearTo"
-                       class="form-control" />
-            </div>
+                    <div class="mb-3">
+                        <label class="form-label d-flex justify-content-between">
+                            <span>Year</span>
+                            <span class="text-muted">
+                                <span id="yearFromLabel">@sliderFrom</span> &ndash; <span id="yearToLabel">@sliderTo</span>
+                            </span>
+                        </label>
+                        <div class="range-wrap">
+                            <div class="range-track"></div>
+                            <div class="range-fill" id="rangeFill"></div>
+                            <input type="range" id="yearFrom" name="yearFrom"
+                                   min="@minYear" max="@maxYear" value="@sliderFrom"
+                                   aria-label="Year from" />
+                            <input type="range" id="yearTo" name="yearTo"
+                                   min="@minYear" max="@maxYear" value="@sliderTo"
+                                   aria-label="Year to" />
+                        </div>
+                    </div>
 
-            <div class="col-md-2">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-select">
-                    <option value="">All Statuses</option>
+                    <div class="mb-3">
+                        <label class="form-label" for="statusSelect">Status</label>
+                        <select name="status" class="form-select" id="statusSelect">
+                            <option value="">All Statuses</option>
 
-                    @foreach (var status in Model.AvailableStatuses)
-                    {
-                        <option value="@status" selected="@(Model.Status.Contains(status))">
-                            @status
-                        </option>
-                    }
-                </select>
-            </div>
+                            @foreach (var status in Model.AvailableStatuses)
+                            {
+                                <option value="@status" selected="@(Model.Status.Contains(status))">
+                                    @status
+                                </option>
+                            }
+                        </select>
+                    </div>
 
-            <div class="col-md-4">
-                <label class="form-label">Location</label>
-                <select name="location" class="form-select">
-                    <option value="">All Locations</option>
+                    <div class="mb-3">
+                        <label class="form-label" for="locationSelect">Location</label>
+                        <select name="location" class="form-select" id="locationSelect">
+                            <option value="">All Locations</option>
 
-                    @foreach (var location in Model.AvailableLocations)
-                    {
-                        <option value="@location.LocationId"
-                                selected="@(Model.Location.Contains(location.LocationId))">
-                            @location.LocationName
-                        </option>
-                    }
-                </select>
-            </div>
+                            @foreach (var location in Model.AvailableLocations)
+                            {
+                                <option value="@location.LocationId"
+                                        selected="@(Model.Location.Contains(location.LocationId))">
+                                    @location.LocationName
+                                </option>
+                            }
+                        </select>
+                    </div>
 
-            <div class="col-md-4 d-flex align-items-end">
-                <div class="form-check">
-                    <input type="checkbox"
-                           name="includeSold"
-                           value="true"
-                           class="form-check-input"
-                           id="includeSold"
-                    @(Model.IncludeSold ? "checked" : "") />
+                    <div class="form-check mb-3">
+                        <input type="checkbox"
+                               name="includeSold"
+                               value="true"
+                               class="form-check-input"
+                               id="includeSold"
+                        @(Model.IncludeSold ? "checked" : "") />
 
-                    <label class="form-check-label" for="includeSold">
-                        Include sold vehicles
-                    </label>
+                        <label class="form-check-label" for="includeSold">
+                            Include sold vehicles
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-charcoal w-100">Apply filters</button>
+                    <a asp-controller="Vehicle" asp-action="Search" class="btn btn-outline-secondary w-100 mt-2">
+                        Clear filters
+                    </a>
                 </div>
             </div>
+        </form>
+    </aside>
 
-            <div class="col-md-4 d-flex align-items-end gap-2">
-                <button type="submit" class="btn btn-primary">
-                    Search
-                </button>
+    <section class="col-lg-9">
 
-                <a asp-controller="Vehicle"
-                   asp-action="Search"
-                   class="btn btn-secondary">
-                    Clear Filters
-                </a>
+        <div class="mb-3">
+            <strong>@Model.TotalCount</strong> vehicle(s) found
+        </div>
+
+        @if (!Model.Vehicles.Any())
+        {
+            <div class="alert alert-info">
+                No matching vehicles found.
             </div>
+        }
+        else
+        {
+            <div class="row g-3">
 
-        </div>
-    </form>
+                @foreach (var vehicle in Model.Vehicles)
+                {
+                    var statusClass = vehicle.Status == "Available" ? "status-instock" :
+                                      vehicle.Status == "In Workshop" ? "status-workshop" : "status-other";
 
-    <hr class="my-4" />
+                    <div class="col-md-6 col-xl-4">
 
-    <div class="mb-3">
-        <strong>@Model.TotalCount</strong> vehicle(s) found
-    </div>
+                        <div class="card card-vehicle shadow-sm h-100">
 
-    @if (!Model.Vehicles.Any())
-    {
-        <div class="alert alert-info">
-            No matching vehicles found.
-        </div>
-    }
-    else
-    {
-        <div class="row g-4">
+                            @if (!string.IsNullOrWhiteSpace(vehicle.PrimaryImage))
+                            {
+                                <img src="@Url.Action("Get", "Images", new { blobName = vehicle.PrimaryImage, thumb = true })"
+                                     loading="lazy"
+                                     class="card-img-top"
+                                     alt="@vehicle.Make @vehicle.Model"
+                                     style="height:180px; object-fit:cover;" />
+                            }
+                            else
+                            {
+                                <div class="card-img-top bg-light text-muted d-flex align-items-center justify-content-center"
+                                     style="height:180px;">No image</div>
+                            }
 
-            @foreach (var vehicle in Model.Vehicles)
-            {
-                <div class="col-md-4">
+                            <div class="card-body d-flex flex-column">
 
-                    <div class="card h-100">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title mb-0">@vehicle.Make @vehicle.Model</h5>
+                                    <span class="badge badge-status @statusClass">@vehicle.Status</span>
+                                </div>
 
-                        @if (!string.IsNullOrWhiteSpace(vehicle.PrimaryImage))
-                        {
-                            <img src="@Url.Action("Get", "Images", new { blobName = vehicle.PrimaryImage, thumb = true })"
-                                 loading="lazy"
-                                 class="card-img-top"
-                                 alt="@vehicle.Make @vehicle.Model"
-                                 style="height:220px; object-fit:cover;" />
-                        }
+                                <p class="card-text mb-3">
+                                    <strong>Year:</strong> @vehicle.Year<br />
+                                    <strong>Registration:</strong> @vehicle.Registration<br />
+                                    <strong>Location:</strong>
+                                    @(vehicle.CurrentLocation ?? "Unknown")<br />
+                                    <strong>Days at location:</strong>
+                                    @(vehicle.DaysAtCurrentLocation?.ToString() ?? "N/A")
+                                </p>
 
-                        <div class="card-body">
+                                <a asp-controller="Vehicle"
+                                   asp-action="Details"
+                                   asp-route-id="@vehicle.VehicleId"
+                                   class="btn btn-charcoal btn-sm mt-auto align-self-start">
+                                    View Details
+                                </a>
 
-                            <h5 class="card-title">
-                                @vehicle.Make @vehicle.Model
-                            </h5>
-
-                            <p class="card-text">
-                                <strong>Year:</strong> @vehicle.Year<br />
-                                <strong>Registration:</strong> @vehicle.Registration<br />
-                                <strong>Status:</strong> @vehicle.Status<br />
-                                <strong>Location:</strong>
-                                @(vehicle.CurrentLocation ?? "Unknown")<br />
-                                <strong>Days at location:</strong>
-                                @(vehicle.DaysAtCurrentLocation?.ToString() ?? "N/A")
-                            </p>
-
-                            <a asp-controller="Vehicle"
-                               asp-action="Details"
-                               asp-route-id="@vehicle.VehicleId"
-                               class="btn btn-primary">
-                                View Details
-                            </a>
+                            </div>
 
                         </div>
 
                     </div>
+                }
 
-                </div>
+            </div>
+
+            @if (totalPages > 1)
+            {
+                <nav class="mt-4" aria-label="Vehicle pages">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-controller="Vehicle"
+                               asp-action="Search"
+                               asp-all-route-data="routeData"
+                               asp-route-page="@(Model.Page - 1)">Previous</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <span class="page-link">Page @Model.Page of @totalPages</span>
+                        </li>
+                        <li class="page-item @(Model.Page >= totalPages ? "disabled" : "")">
+                            <a class="page-link"
+                               asp-controller="Vehicle"
+                               asp-action="Search"
+                               asp-all-route-data="routeData"
+                               asp-route-page="@(Model.Page + 1)">Next</a>
+                        </li>
+                    </ul>
+                </nav>
             }
-
-        </div>
-
-        @if (totalPages > 1)
-        {
-            <nav class="mt-4" aria-label="Search results pages">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
-                        <a class="page-link"
-                           asp-controller="Vehicle"
-                           asp-action="Search"
-                           asp-all-route-data="routeData"
-                           asp-route-page="@(Model.Page - 1)">Previous</a>
-                    </li>
-                    <li class="page-item disabled">
-                        <span class="page-link">Page @Model.Page of @totalPages</span>
-                    </li>
-                    <li class="page-item @(Model.Page >= totalPages ? "disabled" : "")">
-                        <a class="page-link"
-                           asp-controller="Vehicle"
-                           asp-action="Search"
-                           asp-all-route-data="routeData"
-                           asp-route-page="@(Model.Page + 1)">Next</a>
-                    </li>
-                </ul>
-            </nav>
         }
-    }
+
+    </section>
 </div>
 
 @section Scripts {
     <script>
-        // Reload when the make changes so the Model dropdown shows that make's models.
-        document.getElementById('makeSelect').addEventListener('change', function() {
-            document.getElementById('modelSelect').value = '';
-            this.form.submit();
-        });
+        (function () {
+            const form = document.getElementById('filterForm');
+            const from = document.getElementById('yearFrom');
+            const to = document.getElementById('yearTo');
+            const fromLabel = document.getElementById('yearFromLabel');
+            const toLabel = document.getElementById('yearToLabel');
+            const fill = document.getElementById('rangeFill');
+            const min = Number(from.min);
+            const max = Number(from.max);
+
+            // Keeps the handles in order and redraws the labels and the coloured bar.
+            function update(changed) {
+                let a = Number(from.value);
+                let b = Number(to.value);
+
+                if (a > b) {
+                    if (changed === from) { from.value = b; a = b; }
+                    else { to.value = a; b = a; }
+                }
+
+                fromLabel.textContent = a;
+                toLabel.textContent = b;
+
+                const span = max - min;
+                fill.style.left = ((a - min) / span * 100) + '%';
+                fill.style.width = ((b - a) / span * 100) + '%';
+            }
+
+            from.addEventListener('input', function () { update(from); });
+            to.addEventListener('input', function () { update(to); });
+            update();
+
+            // A handle left at its end means "no limit", so don't send that value.
+            form.addEventListener('submit', function () {
+                if (Number(from.value) === min) from.disabled = true;
+                if (Number(to.value) === max) to.disabled = true;
+            });
+
+            // Reload when the make changes so the Model dropdown shows that make's models.
+            document.getElementById('makeSelect').addEventListener('change', function () {
+                document.getElementById('modelSelect').value = '';
+                form.requestSubmit();
+            });
+        })();
     </script>
 }

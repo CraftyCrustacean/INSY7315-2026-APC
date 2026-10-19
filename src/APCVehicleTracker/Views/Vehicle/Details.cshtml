@@ -12,6 +12,8 @@
         (await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanReactivateVehicles)).Succeeded;
 }
 
+<a asp-controller="Vehicle" asp-action="Search" class="btn btn-outline-secondary btn-sm mb-3">&larr; Back to Vehicles</a>
+
 @if (TempData["SuccessMessage"] is string successMessage)
 {
     <div class="alert alert-success">@successMessage</div>
@@ -45,7 +47,7 @@
                 @* Saheel Ramone Bhugwandeen - Feature 3: Log Movement *@
                 @if (Model.IsActive && canLogMovements && Model.Status != "Sold")
                 {
-                    <a asp-action="LogMovement" asp-route-id="@Model.Id" class="btn btn-apc">Log New Movement</a>
+                    <a asp-action="LogMovement" asp-route-id="@Model.Id" class="btn btn-charcoal">Log New Movement</a>
                 }
                 @if (Model.IsActive && canEditVehicles)
                 {
@@ -58,8 +60,6 @@
                         <button type="submit" class="btn btn-success">Reactivate</button>
                     </form>
                 }
-
-                <a asp-controller="Vehicle" asp-action="Index" class="btn btn-outline-secondary">Back to Dashboard</a>
             </div>
         </div>
     </div>

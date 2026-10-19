@@ -8,14 +8,13 @@
 
 <div class="d-flex align-items-center justify-content-center" style="min-height: 60vh;">
     <div class="text-center text-white px-4 py-5 rounded-4 shadow-lg"
-         style="background-color: rgba(27, 42, 99, 0.85); max-width: 720px;">
+         style="background-color: rgba(43, 43, 43, 0.88); max-width: 720px;">
 
         <h1 class="display-5 fw-semibold mb-2">APC Car Sales</h1>
         <p class="lead mb-4">Vehicle Stock Tracker</p>
 
         <div class="d-flex flex-wrap justify-content-center gap-2">
-            <a asp-controller="Vehicle" asp-action="Index" class="btn btn-apc btn-lg">Dashboard</a>
-            <a asp-controller="Vehicle" asp-action="Search" class="btn btn-light btn-lg">Search vehicles</a>
+            <a asp-controller="Vehicle" asp-action="Search" class="btn btn-apc btn-lg">Vehicles</a>
             @if ((await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanViewReports)).Succeeded)
             {
                 <a class="btn btn-light btn-lg" asp-controller="Reports" asp-action="Index">Reports</a>

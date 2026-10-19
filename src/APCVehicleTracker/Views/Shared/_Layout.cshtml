@@ -29,11 +29,14 @@
                 </button>
                 <div class="collapse navbar-collapse" id="navMenu">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"><a class="nav-link" asp-controller="Vehicle" asp-action="Index">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" asp-controller="Vehicle" asp-action="Search">Search</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Vehicle" asp-action="Search">Vehicles</a></li>
                         @if ((await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanViewReports)).Succeeded)
                         {
                             <li class="nav-item"><a class="nav-link" asp-controller="Reports" asp-action="Index">Reports</a></li>
+                        }
+                        @if ((await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanReactivateVehicles)).Succeeded)
+                        {
+                            <li class="nav-item"><a class="nav-link" asp-controller="ManageVehicles" asp-action="Inactive">Inactive</a></li>
                         }
                         @if ((await AuthorizationService.AuthorizeAsync(User, AuthPolicies.CanManageUsers)).Succeeded)
                         {
@@ -55,7 +58,7 @@
         @RenderBody()
     </main>
 
-    <footer class="text-center text-muted py-3 mt-4 border-top">
+    <footer class="site-footer text-center py-3 @(isHome ? "site-footer-home" : "text-muted border-top mt-4")">
         &copy; @DateTime.Now.Year - APC Car Sales Vehicle Stock Tracker
     </footer>
 
