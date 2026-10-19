@@ -40,7 +40,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body class="@(isHome ? "home-bg" : "")">
-    <header>
+    <header class="sticky-top">
         <nav class="navbar navbar-expand-lg navbar-dark apc-navbar">
             <div class="container-fluid">
                 <a class="navbar-brand d-flex align-items-center" asp-controller="Home" asp-action="Index">
@@ -150,6 +150,15 @@
         });
     </script>
     <script>
+        // Expose the sticky header's height so sticky page elements can sit below it
+        (() => {
+            const header = document.querySelector("body > header");
+            if (!header || !window.ResizeObserver) return;
+            new ResizeObserver(() => {
+                document.documentElement.style.setProperty("--apc-header-height", header.offsetHeight + "px");
+            }).observe(header);
+        })();
+
         (() => {
             const el = document.getElementById("confirmModal");
             if (!el || !window.bootstrap) return;

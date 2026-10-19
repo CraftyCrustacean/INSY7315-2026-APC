@@ -418,9 +418,10 @@ body.home-bg {
     align-items: start;
   }
 
+  /* Sticks below the sticky navbar (height set in _Layout.cshtml) with breathing room */
   .vehicles-filters {
     position: sticky;
-    top: 1.5rem;
+    top: calc(var(--apc-header-height, 4rem) + 1.75rem);
   }
 }
 
@@ -946,6 +947,7 @@ body.home-bg {
 
 .apc-navbar {
   background-color: var(--apc-navy) !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
 .nav-account {
