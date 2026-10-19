@@ -12,7 +12,7 @@
     </div>
 
     <div class="apc-panel p-4">
-        <form asp-action="Create" method="post">
+        <form asp-action="Create" method="post" enctype="multipart/form-data" id="createVehicleForm">
             <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
 
             <h2 class="section-label">Vehicle details</h2>
@@ -42,7 +42,14 @@
                 </div>
             </div>
 
-            <p class="text-muted small mt-4 mb-0">You can upload images after the vehicle has been added.</p>
+            <hr class="my-4" />
+
+            <h2 class="section-label mb-1">Images <span class="text-muted fw-normal text-lowercase">(optional)</span></h2>
+            <p class="text-muted small mb-3">Up to 5 JPEG or PNG images, 5 MB each. The first image becomes the primary image. You can reorder or add more later.</p>
+
+            <label class="form-label visually-hidden" for="imageFiles">Images</label>
+            <input type="file" name="files" class="form-control" accept="image/jpeg,image/png" multiple id="imageFiles" />
+            <span class="text-danger small" id="uploadError">@Html.ValidationMessage("files")</span>
 
             <div class="d-flex justify-content-end gap-2 mt-4">
                 <a asp-controller="Vehicle" asp-action="Index" class="btn btn-ghost">Cancel</a>
@@ -54,4 +61,25 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Convenience only - the server and API re-validate size, count and file signature.
+        document.getElementById('createVehicleForm').addEventListener('submit', function (e) {
+            const files = document.getElementById('imageFiles').files;
+            const error = document.getElementById('uploadError');
+            error.textContent = '';
+
+            if (files.length > 5) {
+                error.textContent = 'You can add at most 5 images.';
+                e.preventDefault();
+                return;
+            }
+            for (const f of files) {
+                if (f.size > 5 * 1024 * 1024) {
+                    error.textContent = 'Each image must be 5 MB or smaller.';
+                    e.preventDefault();
+                    return;
+                }
+            }
+        });
+    </script>
 }
