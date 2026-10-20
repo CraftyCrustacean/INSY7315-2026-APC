@@ -16,6 +16,7 @@
 body {
   background-color: var(--apc-light);
   min-height: 100vh;
+  min-height: 100dvh; /* tracks mobile browser toolbars where supported */
   display: flex;
   flex-direction: column;
 }
@@ -34,9 +35,19 @@ body.home-bg .home-hero {
   width: 100%;
 }
 
-/* Background photo, Home page only (class set in _Layout.cshtml) */
-body.home-bg {
-  background-color: var(--apc-light);
+/* Background photo, Home page only (class set in _Layout.cshtml).
+   Drawn on a fixed layer rather than with background-attachment: fixed,
+   which iOS Safari and some Android browsers don't support. */
+body.home-bg::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100vh;
+  height: 100lvh; /* largest viewport, so it still covers when toolbars hide */
+  background-color: #282828;
   background-image:
     linear-gradient(
       180deg,
@@ -48,7 +59,7 @@ body.home-bg {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
+  pointer-events: none;
 }
 
 .home-hero {
