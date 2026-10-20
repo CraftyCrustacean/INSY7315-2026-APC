@@ -38,12 +38,20 @@ body.home-bg .home-hero {
 /* Base colour shows behind iOS Safari's see-through toolbars and in overscroll
    bounce, where the fixed photo layer isn't drawn - charcoal instead of white. */
 body.home-bg {
+  /* Overlay + photo, shared by the desktop and touch-device versions below */
+  --home-photo:
+    linear-gradient(
+      180deg,
+      rgba(244, 246, 250, 0.2) 0%,
+      rgba(244, 246, 250, 0) 60%,
+      rgba(244, 246, 250, 0.2) 100%
+    ),
+    url("../images/login-background.jpg");
   background-color: #282828;
 }
 
 /* Background photo, Home page only (class set in _Layout.cshtml).
-   Drawn on a fixed layer rather than with background-attachment: fixed,
-   which iOS Safari and some Android browsers don't support. */
+   Desktop: drawn on a fixed layer so the photo stays still while scrolling. */
 body.home-bg::before {
   content: "";
   position: fixed;
@@ -54,18 +62,28 @@ body.home-bg::before {
   height: 100vh;
   height: 100lvh; /* largest viewport, so it still covers when toolbars hide */
   background-color: #282828;
-  background-image:
-    linear-gradient(
-      180deg,
-      rgba(244, 246, 250, 0.2) 0%,
-      rgba(244, 246, 250, 0) 60%,
-      rgba(244, 246, 250, 0.2) 100%
-    ),
-    url("../images/login-background.jpg");
+  background-image: var(--home-photo);
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   pointer-events: none;
+}
+
+/* Touch devices: put the photo on the page itself with normal scrolling instead.
+   Mobile Safari draws the page background behind its see-through toolbars but
+   not fixed layers, so this lets the photo continue behind the address bar. */
+@media (hover: none) and (pointer: coarse) {
+  body.home-bg {
+    background-image: var(--home-photo);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: scroll;
+  }
+
+  body.home-bg::before {
+    content: none;
+  }
 }
 
 .home-hero {
