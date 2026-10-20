@@ -35,6 +35,12 @@ body.home-bg .home-hero {
   width: 100%;
 }
 
+/* Base colour shows behind iOS Safari's see-through toolbars and in overscroll
+   bounce, where the fixed photo layer isn't drawn - charcoal instead of white. */
+body.home-bg {
+  background-color: #282828;
+}
+
 /* Background photo, Home page only (class set in _Layout.cshtml).
    Drawn on a fixed layer rather than with background-attachment: fixed,
    which iOS Safari and some Android browsers don't support. */
