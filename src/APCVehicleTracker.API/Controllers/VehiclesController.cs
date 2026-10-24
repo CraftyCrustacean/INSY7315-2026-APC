@@ -22,8 +22,23 @@ namespace APCVehicleTracker.API.Controllers
 
         private async Task<bool> IsAdminAsync() => (await _authorizationService.AuthorizeAsync(User, AuthPolicies.CanReactivateVehicles)).Succeeded;
 
+        private static string? NormaliseSearchTerm(string? search)
+        {
+            if (string.IsNullOrWhiteSpace(search))
+                return null;
+
+            var term = new string(search
+                .Where(c => c != ' ' && c != '-')
+                .Take(30)
+                .ToArray())
+                .ToUpperInvariant();
+
+            return term.Length == 0 ? null : term;
+        }
+
         [HttpGet]
         public async Task<IActionResult> SearchVehicles(
+            string? search = null,
             string? make = null,
             string? model = null,
             int? yearFrom = null,
@@ -50,6 +65,14 @@ namespace APCVehicleTracker.API.Controllers
             if (!includeSold)
                 query = query.Where(v => v.Status != "Sold");
 
+            var term = NormaliseSearchTerm(search);
+            if (term != null)
+            {
+                query = query.Where(v =>
+                    v.Registration.ToUpper().Replace(" ", "").Replace("-", "").Contains(term) ||
+                    (v.Vin != null && v.Vin.ToUpper().Contains(term)));
+            }
+
             if (!string.IsNullOrWhiteSpace(make))
                 query = query.Where(v => v.Make == make);
 
@@ -64,6 +87,17 @@ namespace APCVehicleTracker.API.Controllers
 
             if (status != null && status.Length > 0)
                 query = query.Where(v => status.Contains(v.Status));
+
+            if (location != null && location.Length > 0)
+            {
+                query = query.Where(v => _context.Movements
+                    .Where(m => m.VehicleId == v.VehicleId)
+                    .OrderByDescending(m => m.MovementDateTime)
+                    .ThenByDescending(m => m.MovementId)
+                    .Select(m => m.ToLocationId)
+                    .Take(1)
+                    .Any(locationId => location.Contains(locationId)));
+            }
 
             var totalCount = await query.CountAsync();
 
@@ -99,6 +133,7 @@ namespace APCVehicleTracker.API.Controllers
                 var latestMovement = movements
                     .Where(m => m.VehicleId == vehicle.VehicleId)
                     .OrderByDescending(m => m.MovementDateTime)
+                    .ThenByDescending(m => m.MovementId)
                     .FirstOrDefault();
 
                 var currentLocation = latestMovement == null
@@ -128,18 +163,6 @@ namespace APCVehicleTracker.API.Controllers
                     DaysAtCurrentLocation = daysAtLocation
                 };
             }).ToList();
-
-            if (location != null && location.Length > 0)
-            {
-                results = results
-                    .Where(v =>
-                        v.CurrentLocation != null &&
-                        location.Any(locationId =>
-                            locations.Any(l =>
-                                l.LocationId == locationId &&
-                                l.LocationName == v.CurrentLocation)))
-                    .ToList();
-            }
 
             return Ok(new VehicleSearchResponseDto
             {

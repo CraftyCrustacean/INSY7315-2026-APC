@@ -62,7 +62,6 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // Convenience only - the server and API re-validate size, count and file signature.
         document.getElementById('createVehicleForm').addEventListener('submit', function (e) {
             const files = document.getElementById('imageFiles').files;
             const error = document.getElementById('uploadError');

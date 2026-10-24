@@ -1,6 +1,5 @@
 namespace APCVehicleTracker.Models
 {
-    // Maps a vehicle status to its status-pill colour (see site.css).
     public static class VehicleStatusStyles
     {
         public static string PillCss(string? status) => status switch

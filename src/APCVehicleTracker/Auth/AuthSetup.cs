@@ -40,8 +40,6 @@ public static class AuthSetup
                 };
             };
 
-            // Tell Entra which account is signing out so it can skip the "pick an account" page.
-            // Needs the login_hint optional claim on the ID token (App registration > Token configuration).
             var existingSignOut = options.Events.OnRedirectToIdentityProviderForSignOut;
             options.Events.OnRedirectToIdentityProviderForSignOut = async ctx =>
             {
@@ -53,8 +51,6 @@ public static class AuthSetup
                 }
             };
 
-            // After Entra signs the user out, go to the home page instead of the "Signed out" page.
-            // Every page needs sign-in, so this lands straight on the Entra sign-in screen.
             var existingSignedOut = options.Events.OnSignedOutCallbackRedirect;
             options.Events.OnSignedOutCallbackRedirect = async ctx =>
             {

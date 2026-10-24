@@ -14,6 +14,7 @@ namespace APCVehicleTracker.Services
         }
 
         public async Task<VehicleSearchViewModel?> SearchVehiclesAsync(
+            string? search = null,
             string? make = null,
             string? model = null,
             int? yearFrom = null,
@@ -24,6 +25,9 @@ namespace APCVehicleTracker.Services
             int page = 1)
         {
             var queryParams = new List<string>();
+
+            if (!string.IsNullOrWhiteSpace(search))
+                queryParams.Add($"search={Uri.EscapeDataString(search.Trim())}");
 
             if (!string.IsNullOrWhiteSpace(make))
                 queryParams.Add($"make={Uri.EscapeDataString(make)}");
