@@ -10,7 +10,6 @@ namespace APCVehicleTracker.Controllers
     [Authorize(Policy = AuthPolicies.CanEditVehicles)]
     public class ManageVehiclesController : Controller
     {
-        // Mirrors the API's limits (VehicleRules.MaxImages / per-file size) for early feedback.
         private const int MaxImages = 5;
         private const long MaxImageBytes = 5L * 1024 * 1024;
 
@@ -37,7 +36,6 @@ namespace APCVehicleTracker.Controllers
             if (vm.StartingLocationId <= 0)
                 ModelState.AddModelError(nameof(vm.StartingLocationId), "Please select a starting location.");
 
-            // Quick checks before the vehicle is created - the API re-validates size, count and file signature.
             files = files?.Where(f => f.Length > 0).ToList() ?? new List<IFormFile>();
             if (files.Count > MaxImages)
                 ModelState.AddModelError("files", $"You can add at most {MaxImages} images.");
@@ -56,7 +54,6 @@ namespace APCVehicleTracker.Controllers
                     }
                     else
                     {
-                        // The vehicle exists at this point, so an upload failure is reported on its edit page.
                         var upload = await _api.UploadImagesAsync(result.Id!.Value, files);
                         if (upload.Success)
                             TempData["SuccessMessage"] = $"Vehicle added with {files.Count} image{(files.Count == 1 ? "" : "s")}.";

@@ -31,14 +31,13 @@ namespace APCVehicleTracker.Controllers
             return View(vehicle);
         }
 
-        // Search used to be its own page; it now lives on Index. Keeps old links working.
         public IActionResult Search()
         {
             return Redirect(Url.Action(nameof(Index)) + Request.QueryString);
         }
 
-        // Vehicle stock list with filters
         public async Task<IActionResult> Index(
+            string? search = null,
             string? make = null,
             string? model = null,
             int? yearFrom = null,
@@ -48,7 +47,10 @@ namespace APCVehicleTracker.Controllers
             bool includeSold = false,
             int page = 1)
         {
+            search = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
+
             var result = await _vehicleApiService.SearchVehiclesAsync(
+                search,
                 make,
                 model,
                 yearFrom,
@@ -63,6 +65,7 @@ namespace APCVehicleTracker.Controllers
                 result = new VehicleSearchViewModel();
             }
 
+            result.Search = search;
             result.Make = make;
             result.Model = model;
             result.YearFrom = yearFrom;

@@ -134,13 +134,10 @@
 
         document.addEventListener("submit", e => {
             const form = e.target;
-            // Skip GET forms (filters), anything stopped by validation, and data-confirm forms
-            // (those are locked once the user confirms, further down)
             if (e.defaultPrevented || form.method.toLowerCase() !== "post" || form.hasAttribute("data-confirm")) return;
             lockForm(form);
         });
 
-        // Pages restored with the back button come back with the buttons still locked
         window.addEventListener("pageshow", e => {
             if (!e.persisted) return;
             document.querySelectorAll("button[aria-busy=true]").forEach(btn => {
@@ -151,7 +148,6 @@
         });
     </script>
     <script>
-        // Expose the sticky header's height so sticky page elements can sit below it
         (() => {
             const header = document.querySelector("body > header");
             if (!header || !window.ResizeObserver) return;
@@ -190,7 +186,6 @@
                 const form = e.target.closest("form[data-confirm]");
                 if (!form) return;
                 e.preventDefault();
-                // form.submit() skips the submit event, so this doesn't loop
                 open(form, () => { lockForm(form); form.submit(); });
             });
 

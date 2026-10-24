@@ -46,9 +46,7 @@ public class AdminController : Controller
         var staff = await _staff.GetAsync(id);
         if (staff is null) return NotFound();
 
-        ViewData["Email"] = staff.Email;
-        ViewData["IsActive"] = staff.IsActive;
-        ViewData["IsSelf"] = staff.StaffId.ToString() == User.FindFirst(StaffSigninService.StaffIdClaim)?.Value;
+        SetEditViewData(staff);
         return View(new UpdateStaffRequest
         {
             FirstName = staff.FirstName,
@@ -61,16 +59,32 @@ public class AdminController : Controller
     [HttpPost]
     public async Task<IActionResult> Edit(int id, UpdateStaffRequest model)
     {
-        if (!ModelState.IsValid) return View(model);
+        if (!ModelState.IsValid) return await RedisplayEditAsync(id, model);
 
         var result = await _staff.UpdateAsync(id, model);
         if (!result.Ok)
         {
             ModelState.AddModelError(string.Empty, result.Error!);
-            return View(model);
+            return await RedisplayEditAsync(id, model);
         }
         TempData["Message"] = $"{result.Value!.FirstName} {result.Value.LastName} was updated.";
         return RedirectToAction(nameof(Index));
+    }
+
+    private async Task<IActionResult> RedisplayEditAsync(int id, UpdateStaffRequest model)
+    {
+        var staff = await _staff.GetAsync(id);
+        if (staff is null) return NotFound();
+
+        SetEditViewData(staff);
+        return View(nameof(Edit), model);
+    }
+
+    private void SetEditViewData(StaffDto staff)
+    {
+        ViewData["Email"] = staff.Email;
+        ViewData["IsActive"] = staff.IsActive;
+        ViewData["IsSelf"] = staff.StaffId.ToString() == User.FindFirst(StaffSigninService.StaffIdClaim)?.Value;
     }
 
     [HttpPost]
